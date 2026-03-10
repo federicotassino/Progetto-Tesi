@@ -83,6 +83,8 @@ public class AppManager : MonoBehaviour
     {
         WorldLockingManager.GetInstance().Load();
 
+        //Prova per GitHub
+
         shelvesListPanel.SetActive(false);
         positioningSphere.SetActive(false);
         sphereIndicator.SetActive(false);
