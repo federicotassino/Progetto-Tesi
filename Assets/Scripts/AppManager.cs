@@ -1,4 +1,5 @@
 using Microsoft.MixedReality.WorldLocking.Core;
+using MixedReality.Toolkit.Examples.Demos;
 using MixedReality.Toolkit.SpatialManipulation;
 using MixedReality.Toolkit.UX;
 using MixedReality.Toolkit.UX.Experimental;
@@ -19,8 +20,9 @@ public struct ArtifactsStruct
 {
     public GameObject artifacts;
     public GameObject artifactsPanel;
+    public Transform artifactVirualizedList;
+    //public Transform artifactContentTransform;
     public Transform artifactScrollView;
-    public Transform artifactContentTransform;
     public PressableButton artifactButtonPrefab;
     public GameObject artifactBackButton;
     public GameObject artifactTitle;
@@ -75,7 +77,7 @@ public class AppManager : MonoBehaviour
     [SerializeField] private GameObject debugCube;
 
     //Artifacts
-    [SerializeField] ArtifactsStruct A_Menu;
+    [SerializeField] public ArtifactsStruct A_Menu;
     
 
     // Start is called before the first frame update
@@ -430,7 +432,7 @@ public class AppManager : MonoBehaviour
     //aggiunge alla lista allArtifacts tutti gli elementi che compongono l'empty Artifacts
     public void GetAllArtifacts(GameObject ar)
     {
-        Transform[] allChildren = ar.GetComponentsInChildren<Transform>();
+        /*Transform[] allChildren = ar.GetComponentsInChildren<Transform>();
 
         foreach (Transform t in allChildren)
         {
@@ -439,7 +441,14 @@ public class AppManager : MonoBehaviour
                 //Debug.Log(t.name);
                 allArtifacts.Add(t.gameObject);
             }
+        }*/
+
+        //GameObject[] allChildren = new GameObject[ar.transform.childCount];
+        for (int i = 0; i < ar.transform.childCount; i++)
+        {
+            allArtifacts.Add(ar.transform.GetChild(i).gameObject);
         }
+
         Debug.Log("Artifacts number: " + allArtifacts.Count);
 
         allArtifacts.Sort((x,y) => x.name.CompareTo(y.name));
@@ -450,7 +459,7 @@ public class AppManager : MonoBehaviour
     public void CreateArtifactScrollView()
     {
         A_Menu.artifactTitle.GetComponent<TextMeshProUGUI>().text = artifactGeneralText;
-        A_Menu.artifactScrollView.gameObject.SetActive(true);
+        A_Menu.artifactVirualizedList.gameObject.SetActive(true);
         A_Menu.artifactBackButton.SetActive(false);
         A_Menu.startNavigationButton.SetActive(false);
         A_Menu.stopNavigationButton.SetActive(false);
@@ -458,7 +467,7 @@ public class AppManager : MonoBehaviour
         A_Menu.navigationText.SetActive(false);
         //artifactSelected = null;
 
-        if (A_Menu.artifactContentTransform.childCount > 0)
+        /*if (A_Menu.artifactContentTransform.childCount > 0)
         {
             ClearScrollView(A_Menu.artifactContentTransform.transform);
         }
@@ -478,13 +487,16 @@ public class AppManager : MonoBehaviour
         Debug.Log("Number of artifact buttons created: " + i);
 
         A_Menu.artifactContentTransform.GetComponentInParent<VirtualizedScrollRectList>().SetItemCount(i);
-        A_Menu.artifactContentTransform.GetComponentInParent<ScrollRect>().verticalNormalizedPosition = 1f;
+        A_Menu.artifactContentTransform.GetComponentInParent<ScrollRect>().verticalNormalizedPosition = 1f;*/
+
+        VirtualizedScrollRectListTester list = A_Menu.artifactScrollView.GetComponent<VirtualizedScrollRectListTester>();
+        list.SetWords(allArtifacts);
     }
 
     //chiude la pagina dedicata ad un singolo reperto e torna alla ScrollView
     public void BackButtonArtifact()
     {
-        A_Menu.artifactScrollView.gameObject.SetActive(true);
+        A_Menu.artifactVirualizedList.gameObject.SetActive(true);
         A_Menu.artifactText.SetActive(false);
         A_Menu.startNavigationButton.SetActive(false);
         A_Menu.artifactBackButton.SetActive(false);
@@ -501,7 +513,7 @@ public class AppManager : MonoBehaviour
         currentPath.Clear();
         //artifactSelected = allArtifacts[index];
         string shelfID = allArtifacts[index].GetComponent<Artifact>().GetID();
-        A_Menu.artifactScrollView.gameObject.SetActive(false);
+        A_Menu.artifactVirualizedList.gameObject.SetActive(false);
         A_Menu.artifactTitle.GetComponent<TextMeshProUGUI>().text = artifactTitle + allArtifacts[index].name;
         A_Menu.artifactText.SetActive(true);
         A_Menu.artifactBackButton.SetActive(true);
@@ -652,7 +664,7 @@ public class AppManager : MonoBehaviour
         A_Menu.stopNavigationButton.SetActive(false);
         A_Menu.navigationText.SetActive(false);
 
-        if(A_Menu.artifactScrollView.gameObject.activeSelf)
+        if(A_Menu.artifactVirualizedList.gameObject.activeSelf)
         {
             A_Menu.artifactTitle.GetComponent<TextMeshProUGUI>().text = artifactGeneralText;
         }

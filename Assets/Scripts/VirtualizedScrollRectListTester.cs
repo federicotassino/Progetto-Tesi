@@ -9,21 +9,26 @@ using MixedReality.Toolkit.UX.Experimental;
 using System;
 using TMPro;
 using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine.UI;
 
 namespace MixedReality.Toolkit.Examples.Demos
 {
     [AddComponentMenu("MRTK/Examples/Virtualized Scroll Rect List Tester")]
     public class VirtualizedScrollRectListTester : MonoBehaviour
     {
-        [SerializeField]
+        /*[SerializeField]
         [Tooltip("Auto-scrolls the list up and down in a sin wave.")]
-        private bool sinScroll = true;
+        private bool sinScroll = true;*/
+        
+        [SerializeField] AppManager appManager;
 
         private VirtualizedScrollRectList list;
         private float destScroll;
         private bool animate;
 
-        private readonly string[] words = { "one", "two", "three", "zebra", "keyboard", "rabbit", "graphite", "ruby", };
+        //private readonly string[] words = { "one", "two", "three", "zebra", "keyboard", "rabbit", "graphite", "ruby", };
+        private List<string> buttonsNames = new();
 
         /// <summary>
         /// A Unity event function that is called on the frame when a script is enabled just before any of the update methods are called the first time.
@@ -37,13 +42,13 @@ namespace MixedReality.Toolkit.Examples.Demos
                 {
                     if (text.gameObject.name == "Text")
                     {
-                        text.text = $"{i} {words[i % words.Length]}";
+                        text.text = $"{buttonsNames[i % buttonsNames.Count]}";
                     }
                 }
 
                 foreach (var item in go.GetComponentsInChildren<PressableButton>())
                 {
-                    item.OnClicked.AddListener(() => Test(i));
+                    item.OnClicked.AddListener(() => ButtonListener(i));
                 }
             };
 
@@ -61,12 +66,12 @@ namespace MixedReality.Toolkit.Examples.Demos
         /// </summary>
         private void Update()
         {
-            if (sinScroll)
+            /*if (sinScroll)
             {
                 list.Scroll = (Mathf.Sin(Time.time * 0.5f - (Mathf.PI / 2)) * 0.5f + 0.5f) * list.MaxScroll;
                 destScroll = list.Scroll;
                 animate = false;
-            }
+            }*/
 
             if (animate)
             {
@@ -85,7 +90,7 @@ namespace MixedReality.Toolkit.Examples.Demos
         /// </summary>
         public void Next()
         {
-            sinScroll = false;
+            //sinScroll = false;
             animate = true;
             destScroll = Mathf.Min(list.MaxScroll, Mathf.Floor(list.Scroll / list.RowsOrColumns) * list.RowsOrColumns + list.TotallyVisibleCount);
         }
@@ -95,7 +100,7 @@ namespace MixedReality.Toolkit.Examples.Demos
         /// </summary>
         public void Prev()
         {
-            sinScroll = false;
+            //sinScroll = false;
             animate = true;
             destScroll = Mathf.Max(0, Mathf.Floor(list.Scroll / list.RowsOrColumns) * list.RowsOrColumns - list.TotallyVisibleCount);
         }
@@ -114,12 +119,29 @@ namespace MixedReality.Toolkit.Examples.Demos
         [ContextMenu("Set Item Count 200")]
         public void TestItemCount2() => list.SetItemCount(200);
 
-        void Test(int i)
+        void ButtonListener(int i)
         {
-            Debug.Log("Cliccato bottone numero: " + i);
+            Debug.Log("Reperto selezionato: " + buttonsNames[i]);
+
+            if(appManager.A_Menu.artifactsPanel.activeSelf)
+            {
+                appManager.OnArtifactButtonClicked(i);
+            }
+            
+        }
+
+        public void SetWords(List<GameObject> items)
+        {
+            buttonsNames.Clear();
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                buttonsNames.Add(items[i].name);
+            }
+            list = GetComponent<VirtualizedScrollRectList>();
+            list.SetItemCount(items.Count);
+            this.gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
         }
     }
-
-
 }
 #pragma warning restore CS1591
