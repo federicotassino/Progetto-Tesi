@@ -42,11 +42,11 @@ public class AppManager : MonoBehaviour
     private GameObject lastToggledPin;
     private List<GameObject> allArtifacts = new();
     //private List<GameObject> artifactsButtonCreated = new();
-    private readonly string artifactGeneralText = "Seleziona il reperto a cui sei interessato";
+    private readonly string artifactGeneralText = "Selezionare il reperto a cui si è interessati";
     private readonly string artifactTitle = "Reperto: ";
     private readonly string artifactShelfYes = "Il reperto si trova nello scaffale: ";
     private readonly string artifactShelfNo = "Il reperto non si trova in nessuno scaffale";
-    private readonly string artifactNavigation = "Dirigiti verso: ";
+    private readonly string artifactNavigation = "Dirigersi verso: ";
     private readonly string artifactReached = "Reperto raggiunto!";
     //private GameObject artifactSelected;
     private readonly List<Transform> currentPath = new();
@@ -59,18 +59,18 @@ public class AppManager : MonoBehaviour
     [SerializeField] private GameObject firstText;
     [SerializeField] private GameObject positionButton;
     [SerializeField] private GameObject secondText;
-    private readonly string firstTextString = "Scegli quale elemento posizionare";
-    private readonly string firstTextString_2 = "Scegli se posizionare l'elemento ";
-    private readonly string secondTextString = "Oppure naviga tra le sottocategorie di ";
-    [SerializeField] private Transform scrollView;
+    private readonly string firstTextString = "Scegliere quale elemento posizionare";
+    private readonly string firstTextString_2 = "Scegliere se posizionare l'elemento ";
+    private readonly string secondTextString = "Oppure navigare tra le sottocategorie di ";
+    [SerializeField] private Transform virtualizedList;
     [SerializeField] private GameObject positioningText;
     [SerializeField] private GameObject positioningButton;
 
     //Warehouse
     [SerializeField] private GameObject warehouse;
-    [SerializeField] private GameObject shelvesListPanel;
+    [SerializeField] public GameObject shelvesListPanel;
     [SerializeField] private PressableButton buttonPrefabShelves;
-    [SerializeField] private Transform contentTransform;
+    [SerializeField] private Transform scrollView;
     [SerializeField] private GameObject returnButton;
     [SerializeField] private GameObject positioningSphere;
     [SerializeField] private GameObject sphereIndicator;
@@ -132,6 +132,7 @@ public class AppManager : MonoBehaviour
 
         positioningText = shelvesListPanel.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "PositioningText");
         positioningButton = shelvesListPanel.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "StopPositioningButton");*/
+        
         positioningText.gameObject.SetActive(false);
         positioningButton.transform.parent.gameObject.SetActive(false);
 
@@ -231,20 +232,22 @@ public class AppManager : MonoBehaviour
             ResetPanelAfterPositioning();
 
             SetInitialTransform(lastShelfPositioned);
-            Debug.Log("Reset posizione");
         } 
     }
 
     //spegne l'UI del posizionamento e riaccende quella della navigazione della warehouse
     public void ResetPanelAfterPositioning()
     {
+        string resetText = positioningText.GetComponent<TextMeshProUGUI>().text;
+        string toRemove = " \"" + lastShelfPositioned.name + "\"";
+        positioningText.GetComponent<TextMeshProUGUI>().text = resetText.Replace(toRemove, "", System.StringComparison.OrdinalIgnoreCase);
         positioningText.gameObject.SetActive(false);
         positioningButton.transform.parent.gameObject.SetActive(false);
         firstText.gameObject.SetActive(true);
         positionButton.transform.parent.gameObject.SetActive(true);
         secondText.gameObject.SetActive(true);
         if (lastShelfPositioned.transform.childCount > 0)
-            scrollView.gameObject.SetActive(true);
+            virtualizedList.gameObject.SetActive(true);
 
         Destroy(lastShelfPositioned.GetComponent<ParentConstraint>());
         positioningSphere.SetActive(false);
@@ -272,7 +275,7 @@ public class AppManager : MonoBehaviour
     {
         if (shelvesButtonCreated.Count > 0) 
         {
-            ClearScrollView(contentTransform);
+            //ClearScrollView(scrollView);
             shelvesButtonCreated.Clear();
         }
 
@@ -281,35 +284,33 @@ public class AppManager : MonoBehaviour
             secondText.gameObject.SetActive(false);
             firstText.GetComponent<TextMeshProUGUI>().text = firstTextString;
             positionButton.transform.parent.gameObject.SetActive(false);
-            scrollView.gameObject.SetActive(true);
+            virtualizedList.gameObject.SetActive(true);
             returnButton.SetActive(false);
         }
         else
         {
             returnButton.SetActive(true);
             secondText.gameObject.SetActive(true);
-            firstText.GetComponent<TextMeshProUGUI>().text = firstTextString_2 + lastShelfPositioned.name;
+            firstText.GetComponent<TextMeshProUGUI>().text = firstTextString_2 + "\"" + lastShelfPositioned.name + "\"";
             positionButton.transform.parent.gameObject.SetActive(true);
             TextMeshProUGUI txt = positionButton.GetComponentInChildren<TextMeshProUGUI>();
             txt.text = "Posiziona " + lastShelfPositioned.name;
 
             if(parent.transform.childCount > 0)
             {
-                secondText.GetComponent<TextMeshProUGUI>().text = secondTextString + lastShelfPositioned.name;
-                scrollView.gameObject.SetActive(true);
+                secondText.GetComponent<TextMeshProUGUI>().text = secondTextString + "\"" + lastShelfPositioned.name + "\"";
+                virtualizedList.gameObject.SetActive(true);
             } 
             else
             {
-                secondText.GetComponent<TextMeshProUGUI>().text = lastShelfPositioned.name + " non possiede altre sottocategorie";
-                scrollView.gameObject.SetActive(false);
+                secondText.GetComponent<TextMeshProUGUI>().text = "\"" + lastShelfPositioned.name + "\"" + " non possiede altre sottocategorie";
+                virtualizedList.gameObject.SetActive(false);
             }
-    
-            Debug.Log(lastShelfPositioned.name);
         }
 
-        if (scrollView.gameObject.activeSelf)
+        if (virtualizedList.gameObject.activeSelf)
         {
-            int i = 0;
+            /*int i = 0;
             foreach (Transform t in parent.transform)
             {
                 PressableButton newButton = Instantiate(buttonPrefabShelves, contentTransform);
@@ -324,7 +325,25 @@ public class AppManager : MonoBehaviour
             }
 
             contentTransform.GetComponentInParent<VirtualizedScrollRectList>().SetItemCount(i);
-            contentTransform.GetComponentInParent<ScrollRect>().verticalNormalizedPosition = 1f;
+            contentTransform.GetComponentInParent<ScrollRect>().verticalNormalizedPosition = 1f;*/
+
+            /*int i = 0;
+            foreach (Transform t in parent.transform)
+            {
+                shelvesButtonCreated.Add(t.gameObject);
+                i++;
+                //Debug.Log("Button " + index + " created");
+            }*/
+
+            for (int i = 0; i < parent.transform.childCount; i++)
+            {
+                shelvesButtonCreated.Add(parent.transform.GetChild(i).gameObject);
+            }
+
+            shelvesButtonCreated.Sort((x, y) => x.name.CompareTo(y.name));
+
+            VirtualizedScrollRectListTester list = scrollView.GetComponent<VirtualizedScrollRectListTester>();
+            list.SetWords(shelvesButtonCreated);
         } 
     }
 
@@ -356,13 +375,11 @@ public class AppManager : MonoBehaviour
     //ripopola la ScrollView tornando indietro di un livello nella gerarchia di warehouse
     public void BackButtonShelves()
     {
-        GameObject go = lastShelfPositioned.transform.parent.gameObject;
-
         if (positioningSphere.activeSelf)
-            Destroy(lastShelfPositioned.GetComponent<ParentConstraint>());
+            ResetShelfPosition();
         
         lastShelfPositioned = lastShelfPositioned.transform.parent.gameObject;
-        CreateShelvesScrollView(go);
+        CreateShelvesScrollView(lastShelfPositioned);
     }
 
     //chiamata quando si clicca sul button per posizionare un elemento della warehouse
@@ -370,6 +387,7 @@ public class AppManager : MonoBehaviour
     {
         positioningSphere.SetActive(true);
         sphereIndicator.SetActive(true);
+        positioningText.GetComponent<TextMeshProUGUI>().text += " \"" + lastShelfPositioned.name + "\"";
         positioningText.gameObject.SetActive(true);
         positioningButton.transform.parent.gameObject.SetActive(true);
         positioningSphere.transform.position = lastShelfPositioned.transform.position;
@@ -388,7 +406,7 @@ public class AppManager : MonoBehaviour
         firstText.gameObject.SetActive(false);
         positionButton.transform.parent.gameObject.SetActive(false);
         secondText.gameObject.SetActive(false);
-        scrollView.gameObject.SetActive(false);
+        virtualizedList.gameObject.SetActive(false);
     }
 
     //cambia lo stato del pin del pannello

@@ -27,7 +27,7 @@ namespace MixedReality.Toolkit.Examples.Demos
         private float destScroll;
         private bool animate;
 
-        //private readonly string[] words = { "one", "two", "three", "zebra", "keyboard", "rabbit", "graphite", "ruby", };
+        private readonly string[] words = { "one", "two", "three", "zebra", "keyboard", "rabbit", "graphite", "ruby", };
         private List<string> buttonsNames = new();
 
         /// <summary>
@@ -35,30 +35,61 @@ namespace MixedReality.Toolkit.Examples.Demos
         /// </summary> 
         private void Start()
         {
-            list = GetComponent<VirtualizedScrollRectList>();
-            list.OnVisible = (go, i) =>
+            if (buttonsNames.Count > 0)
             {
-                foreach (var text in go.GetComponentsInChildren<TextMeshProUGUI>())
+                list = GetComponent<VirtualizedScrollRectList>();
+                list.OnVisible = (go, i) =>
                 {
-                    if (text.gameObject.name == "Text")
+                    foreach (var text in go.GetComponentsInChildren<TextMeshProUGUI>())
                     {
-                        text.text = $"{buttonsNames[i % buttonsNames.Count]}";
+                        if (text.gameObject.name == "Text")
+                        {
+                            text.text = $"{buttonsNames[i % buttonsNames.Count]}";
+                        }
                     }
-                }
 
-                foreach (var item in go.GetComponentsInChildren<PressableButton>())
+                    foreach (var item in go.GetComponentsInChildren<PressableButton>())
+                    {
+                        item.OnClicked.AddListener(() => ButtonListener(i));
+                    }
+                };
+
+                list.OnInvisible = (go, i) =>
                 {
-                    item.OnClicked.AddListener(() => ButtonListener(i));
-                }
-            };
-
-            list.OnInvisible = (go, i) =>
+                    foreach (var item in go.GetComponentsInChildren<PressableButton>())
+                    {
+                        item.OnClicked.RemoveAllListeners();
+                    }
+                };
+            }
+            else
             {
-                foreach (var item in go.GetComponentsInChildren<PressableButton>())
+                list = GetComponent<VirtualizedScrollRectList>();
+                list.OnVisible = (go, i) =>
                 {
-                    item.OnClicked.RemoveAllListeners();
-                }
-            };
+                    foreach (var text in go.GetComponentsInChildren<TextMeshProUGUI>())
+                    {
+                        if (text.gameObject.name == "Text")
+                        {
+                            text.text = $"{words[i % words.Length]}";
+                        }
+                    }
+
+                    foreach (var item in go.GetComponentsInChildren<PressableButton>())
+                    {
+                        item.OnClicked.AddListener(() => ButtonListener(i));
+                    }
+                };
+
+                list.OnInvisible = (go, i) =>
+                {
+                    foreach (var item in go.GetComponentsInChildren<PressableButton>())
+                    {
+                        item.OnClicked.RemoveAllListeners();
+                    }
+                };
+            }
+            
         }
 
         /// <summary>
@@ -121,24 +152,30 @@ namespace MixedReality.Toolkit.Examples.Demos
 
         void ButtonListener(int i)
         {
-            Debug.Log("Reperto selezionato: " + buttonsNames[i]);
+            Debug.Log("Bottone selezionato: " + buttonsNames[i]);
 
-            if(appManager.A_Menu.artifactsPanel.activeSelf)
+            if (appManager.A_Menu.artifactsPanel.activeSelf)
             {
                 appManager.OnArtifactButtonClicked(i);
+            }
+            else if (appManager.shelvesListPanel.activeSelf)
+            {
+                appManager.OnShelfButtonClicked(i);
             }
             
         }
 
         public void SetWords(List<GameObject> items)
         {
+            list = GetComponent<VirtualizedScrollRectList>();
+            list.SetItemCount(0);
             buttonsNames.Clear();
 
             for (int i = 0; i < items.Count; i++)
             {
                 buttonsNames.Add(items[i].name);
             }
-            list = GetComponent<VirtualizedScrollRectList>();
+            
             list.SetItemCount(items.Count);
             this.gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
         }
