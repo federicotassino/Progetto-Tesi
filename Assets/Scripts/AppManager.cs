@@ -265,9 +265,18 @@ public class AppManager : MonoBehaviour
             {
                 //Debug.Log(t.name);
                 allShelves.Add(t.gameObject);
+                
+                if (t.childCount == 0)
+                {
+                    if (t.gameObject.TryGetComponent<StorageContainer>(out var st))
+                    {
+                        st.SetIsShelf(true);
+                        Debug.Log(t.gameObject.name + " isShelf value: " + st.GetIsShelf());
+                    }
+                }
             }   
         }
-        Debug.Log("Shelves number: " + allShelves.Count);
+        Debug.Log("Storage Container number: " + allShelves.Count);
     }
 
     //gestisce come viene popolata la ScrollView degli scaffali con i vari button degli elementi della warehouse
@@ -461,7 +470,6 @@ public class AppManager : MonoBehaviour
             }
         }*/
 
-        //GameObject[] allChildren = new GameObject[ar.transform.childCount];
         for (int i = 0; i < ar.transform.childCount; i++)
         {
             allArtifacts.Add(ar.transform.GetChild(i).gameObject);
@@ -585,9 +593,11 @@ public class AppManager : MonoBehaviour
         A_Menu.startNavigationButton.SetActive(false);
         A_Menu.stopNavigationButton.SetActive(true);
         A_Menu.solverIndicator.SetActive(true);
+        A_Menu.artifactTarget.GetComponent<Follow>().enabled = true;
+        A_Menu.artifactTarget.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
 
-        //se parte del percorso del nuovo reperto è uguale a qullo del reperto precedente si saltano quei passaggi
-        step = 0;
+       //se parte del percorso del nuovo reperto è uguale a qullo del reperto precedente si saltano quei passaggi
+       step = 0;
         if (recentPath.Count > 0)
         {
             while (step < currentPath.Count && step < recentPath.Count)
@@ -625,12 +635,23 @@ public class AppManager : MonoBehaviour
     {
         if (step < currentPath.Count)
         {
-            A_Menu.artifactTarget.GetComponent<ArtifactIndicator>().SetTargetPosition(currentPath[step].position);
+            A_Menu.artifactTarget.GetComponent<ArtifactIndicator>().SetTargetPosition(currentPath[step]);
             A_Menu.artifactTarget.transform.position = currentPath[step].position;
             Debug.Log("Next step: " + step + " - " + currentPath[step].name);
             A_Menu.artifactTarget.SetActive(true);
             A_Menu.navigationText.SetActive(true);
             A_Menu.navigationText.GetComponent<TextMeshProUGUI>().text = artifactNavigation + currentPath[step].name;
+
+            if (currentPath[step].gameObject.TryGetComponent<StorageContainer>(out var st) )
+            {
+                if (st.GetIsShelf())
+                {
+                    A_Menu.artifactTarget.GetComponent<Follow>().enabled = false;
+                    A_Menu.artifactTarget.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                    Debug.Log("Rotazione");
+                }
+                    
+            }
 
             //Ogni volta che si raggiunge la freccia target quel passaggio (che corrisponde a step - 1) viene aggiunto al recentPath.
             //La seconda condizione dell'if serve ad evitare doppioni quando si inizia la navigazione saltando gli step già fatti per l'ultimo reperto !recentPath.Contains(currentPath[step - 1])
@@ -644,6 +665,7 @@ public class AppManager : MonoBehaviour
             //A_Menu.artifactTarget.SetActive(false);
             //A_Menu.solverIndicator.SetActive(false);
             A_Menu.artifactTarget.SetActive(true);
+            //A_Menu.artifactTarget.transform.rotation = new Quaternion(90f, 0 , 0, A_Menu.artifactTarget.transform.rotation.w);
             A_Menu.stopNavigationButton.SetActive(false);
             A_Menu.navigationText.GetComponent<TextMeshProUGUI>().text = artifactReached;
 
