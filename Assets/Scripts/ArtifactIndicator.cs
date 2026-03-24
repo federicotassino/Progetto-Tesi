@@ -14,7 +14,7 @@ public class ArtifactIndicator : MonoBehaviour
 
     private void Start()
     {
-
+        //transform.rotation = Quaternion.Euler(0f, 0f, 0f);
     }
 
     private void FixedUpdate()
@@ -42,6 +42,9 @@ public class ArtifactIndicator : MonoBehaviour
             lookingForShelf = st.GetIsShelf();
 
         Vector3 value = shelfTransform.position;
-        targetPosition = value + new Vector3(0f, (amplitude/2f), 0f);
+        if (!lookingForShelf)
+            targetPosition = value + new Vector3(0f, (amplitude / 2f), 0f);
+        else
+            targetPosition = value;
     }
 }

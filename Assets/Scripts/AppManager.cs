@@ -664,7 +664,13 @@ public class AppManager : MonoBehaviour
             Debug.Log("Reperto raggiunto! =)");
             //A_Menu.artifactTarget.SetActive(false);
             //A_Menu.solverIndicator.SetActive(false);
+            A_Menu.artifactTarget.GetComponent<Follow>().enabled = false;
             A_Menu.artifactTarget.SetActive(true);
+
+            //nel caso tutti gli step siano stati skippati perché si naviga verso lo stesso scaffale
+            A_Menu.artifactTarget.GetComponent<ArtifactIndicator>().SetTargetPosition(currentPath[step-1]);
+            A_Menu.artifactTarget.transform.position = currentPath[step-1].position;
+            
             //A_Menu.artifactTarget.transform.rotation = new Quaternion(90f, 0 , 0, A_Menu.artifactTarget.transform.rotation.w);
             A_Menu.stopNavigationButton.SetActive(false);
             A_Menu.navigationText.GetComponent<TextMeshProUGUI>().text = artifactReached;
@@ -677,7 +683,8 @@ public class AppManager : MonoBehaviour
                 recentPath.Add(item);
         }
 
-        step++;
+        if (step <= currentPath.Count)
+            step++;
     }
 
     //quando la freccia target entra nel trigger si passa al punto successivo da raggiungere
@@ -698,7 +705,6 @@ public class AppManager : MonoBehaviour
     //chiamata quando si interrompe la navigazione verso un reperto, ma anche dalla funzione del back button e dalla X del pannello reperti
     public void StopNavigation()
     {
-        //A_Menu.artifactIndicator.GetComponent<ArtifactIndicator>().SetMove(false);
         A_Menu.artifactTarget.SetActive(false);
         A_Menu.solverIndicator.SetActive(false);
         A_Menu.stopNavigationButton.SetActive(false);
