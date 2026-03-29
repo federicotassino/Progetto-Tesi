@@ -19,4 +19,7 @@ public class Artifact : MonoBehaviour
 
     public string GetID()
         { return ShelfID; }
+
+    public void SetShelfID(string id)
+        { ShelfID = id; }
 }

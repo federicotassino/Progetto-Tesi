@@ -7,9 +7,10 @@
 using MixedReality.Toolkit.UX;
 using MixedReality.Toolkit.UX.Experimental;
 using System;
-using TMPro;
-using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace MixedReality.Toolkit.Examples.Demos
@@ -22,10 +23,14 @@ namespace MixedReality.Toolkit.Examples.Demos
         private bool sinScroll = true;*/
         
         [SerializeField] AppManager appManager;
+        [SerializeField] GameObject warehouse;
 
         private VirtualizedScrollRectList list;
         private float destScroll;
         private bool animate;
+        private bool forDeposit = false;
+        private List<GameObject> depositList = new();
+        private readonly string depositText = "Navigare la gerarchia fino allo scaffale desiderato";
 
         private readonly string[] words = { "one", "two", "three", "zebra", "keyboard", "rabbit", "graphite", "ruby", };
         private List<string> buttonsNames = new();
@@ -154,13 +159,31 @@ namespace MixedReality.Toolkit.Examples.Demos
         {
             Debug.Log("Bottone selezionato: " + buttonsNames[i]);
 
-            if (appManager.A_Menu.artifactsPanel.activeSelf)
+            if (!forDeposit)
             {
-                appManager.OnArtifactButtonClicked(i);
+                if (appManager.A_Menu.artifactsPanel.activeSelf)
+                {
+                    appManager.OnArtifactButtonClicked(i);
+                }
+                else if (appManager.shelvesListPanel.activeSelf)
+                {
+                    appManager.OnShelfButtonClicked(i);
+                }
             }
-            else if (appManager.shelvesListPanel.activeSelf)
+            else
             {
-                appManager.OnShelfButtonClicked(i);
+                if (depositList[i].transform.childCount > 0)
+                    ListForDeposit(depositList[i]);
+                else
+                {
+                    Debug.Log("Reperto posizionato");
+                    GameObject artifact = appManager.GetArtifactSelected();
+                    artifact.GetComponent<Artifact>().SetShelfID(depositList[i].name);
+                    PlayerPrefs.SetString(artifact.name, depositList[i].name);
+
+                    forDeposit = false;
+                    appManager.BackButtonArtifact();
+                }
             }
             
         }
@@ -179,6 +202,43 @@ namespace MixedReality.Toolkit.Examples.Demos
             list.SetItemCount(items.Count);
             this.gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
         }
+
+        public void ListForDeposit(GameObject parent)
+        {
+            forDeposit = true;
+            depositList.Clear();
+
+            if (parent == warehouse)
+                appManager.A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = depositText;
+
+            for (int i = 0; i < parent.transform.childCount; i++)
+                depositList.Add(parent.transform.GetChild(i).gameObject);
+
+            depositList.Sort((x,y) => x.name.CompareTo(y.name));
+
+            SetWords(depositList);
+        }
+
+        public void Back()
+        {
+            GameObject currentParent = depositList[0].transform.parent.gameObject;
+
+            if (currentParent != null)
+            {
+                if(currentParent.name != warehouse.name)
+                {
+                    ListForDeposit(currentParent.transform.parent.gameObject);
+                }
+                else
+                {
+                    forDeposit = false;
+                    appManager.BackButtonArtifact();
+                }
+            }
+        }
+
+        public bool GetForDeposit()
+            { return forDeposit; }
     }
 }
 #pragma warning restore CS1591
