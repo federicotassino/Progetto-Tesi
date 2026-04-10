@@ -17,7 +17,7 @@ public class Artifact : MonoBehaviour
         return string.Format("[Artifact: Id={0}, Name={1},  TextDescription={2},  ShelvingID={3}]", Id, Name, TextDescription, ShelfID);
     }
 
-    public string GetID()
+    public string GetShelfID()
         { return ShelfID; }
 
     public void SetShelfID(string id)

@@ -22,8 +22,9 @@ namespace MixedReality.Toolkit.Examples.Demos
         [Tooltip("Auto-scrolls the list up and down in a sin wave.")]
         private bool sinScroll = true;*/
         
-        [SerializeField] AppManager appManager;
-        [SerializeField] GameObject warehouse;
+        [SerializeField] private AppManager appManager;
+        [SerializeField] private GameObject warehouse;
+        [SerializeField] private GameObject[] buttonPrefabs;
 
         private VirtualizedScrollRectList list;
         private float destScroll;
@@ -31,6 +32,7 @@ namespace MixedReality.Toolkit.Examples.Demos
         private bool forDeposit = false;
         private List<GameObject> depositList = new();
         private readonly string depositText = "Navigare la gerarchia fino allo scaffale desiderato";
+        //private GameObject[] depositUI;
 
         private readonly string[] words = { "one", "two", "three", "zebra", "keyboard", "rabbit", "graphite", "ruby", };
         private List<string> buttonsNames = new();
@@ -40,6 +42,11 @@ namespace MixedReality.Toolkit.Examples.Demos
         /// </summary> 
         private void Start()
         {
+            //foreach (var obj in depositUI)
+            //{
+            //    obj.SetActive(false);
+            //}
+
             if (buttonsNames.Count > 0)
             {
                 list = GetComponent<VirtualizedScrollRectList>();
@@ -176,16 +183,39 @@ namespace MixedReality.Toolkit.Examples.Demos
                     ListForDeposit(depositList[i]);
                 else
                 {
-                    Debug.Log("Reperto posizionato");
+                    Debug.Log("Reperto depositato");
                     GameObject artifact = appManager.GetArtifactSelected();
                     artifact.GetComponent<Artifact>().SetShelfID(depositList[i].name);
                     PlayerPrefs.SetString(artifact.name, depositList[i].name);
 
-                    forDeposit = false;
-                    appManager.BackButtonArtifact();
+                    /*foreach (var obj in depositUI)
+                    {
+                        obj.SetActive(true);
+                    }*/
+                    //forDeposit = false;
+                    //appManager.BackButtonArtifact();
+                    GameObject parent = this.gameObject.transform.parent.gameObject.transform.parent.gameObject;
+                    //this.gameObject.GetComponent<Renderer>().enabled = false;
+
+                    /*parent.AddComponent<CanvasGroup>();
+                    CanvasGroup canvasGroups = parent.GetComponent<CanvasGroup>();
+                    canvasGroups.alpha = 0f;
+                    canvasGroups.interactable = false;
+                    canvasGroups.ignoreParentGroups = true;*/
+                    appManager.DepositSucceded();
                 }
             }
             
+        }
+
+        public void DepositFinished()
+        {
+            //foreach (var obj in depositUI)
+            //{
+            //    obj.SetActive(false);
+            //}
+            forDeposit = false;
+            appManager.BackButtonArtifact();
         }
 
         public void SetWords(List<GameObject> items)
@@ -198,7 +228,7 @@ namespace MixedReality.Toolkit.Examples.Demos
             {
                 buttonsNames.Add(items[i].name);
             }
-            
+
             list.SetItemCount(items.Count);
             this.gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
         }
@@ -215,6 +245,17 @@ namespace MixedReality.Toolkit.Examples.Demos
                 depositList.Add(parent.transform.GetChild(i).gameObject);
 
             depositList.Sort((x,y) => x.name.CompareTo(y.name));
+
+            // se la lista è composta da scaffali depositabili si usa un prefab altrimenti se ne usa un altro (controllo fatto solo su primo elemento della lista, non funziona se mista)
+            list = GetComponent<VirtualizedScrollRectList>();
+            if (depositList[0].GetComponent<StorageContainer>().GetIsShelf())
+            {
+                list.Prefab = buttonPrefabs[1];
+            }
+            else
+            {
+                list.Prefab = buttonPrefabs[0];
+            }
 
             SetWords(depositList);
         }
@@ -239,6 +280,9 @@ namespace MixedReality.Toolkit.Examples.Demos
 
         public bool GetForDeposit()
             { return forDeposit; }
+
+        public void SetForDeposit(bool value)
+            { forDeposit = value; }
     }
 }
 #pragma warning restore CS1591
