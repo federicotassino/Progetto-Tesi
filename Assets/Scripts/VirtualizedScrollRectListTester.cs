@@ -32,6 +32,8 @@ namespace MixedReality.Toolkit.Examples.Demos
         private bool forDeposit = false;
         private List<GameObject> depositList = new();
         private readonly string depositText = "Navigare la gerarchia fino allo scaffale desiderato";
+        private List<GameObject> shelvesList = new();
+        private GameObject shelfForDeposit;
         //private GameObject[] depositUI;
 
         private readonly string[] words = { "one", "two", "three", "zebra", "keyboard", "rabbit", "graphite", "ruby", };
@@ -42,10 +44,7 @@ namespace MixedReality.Toolkit.Examples.Demos
         /// </summary> 
         private void Start()
         {
-            //foreach (var obj in depositUI)
-            //{
-            //    obj.SetActive(false);
-            //}
+            shelvesList = appManager.GetShelvesList();
 
             if (buttonsNames.Count > 0)
             {
@@ -57,6 +56,18 @@ namespace MixedReality.Toolkit.Examples.Demos
                         if (text.gameObject.name == "Text")
                         {
                             text.text = $"{buttonsNames[i % buttonsNames.Count]}";
+
+                            if (this.gameObject.tag == "Deposit list")
+                            {
+                                GameObject item = shelvesList.Find(x => x.name == text.text);
+                                if (item != null)
+                                {
+                                    if (item.GetComponent<StorageContainer>().GetIsShelf())
+                                        HandlePrefab(text.gameObject, false);
+                                    else
+                                        HandlePrefab(text.gameObject, true);
+                                }
+                            }
                         }
                     }
 
@@ -183,37 +194,33 @@ namespace MixedReality.Toolkit.Examples.Demos
                     ListForDeposit(depositList[i]);
                 else
                 {
-                    Debug.Log("Reperto depositato");
-                    GameObject artifact = appManager.GetArtifactSelected();
+                    Debug.Log("Scelto scaffale per deposito");
+
+                    appManager.StartDepositNavigation(depositList[i]);
+                    shelfForDeposit = depositList[i];
+
+                    /*GameObject artifact = appManager.GetArtifactSelected();
                     artifact.GetComponent<Artifact>().SetShelfID(depositList[i].name);
                     PlayerPrefs.SetString(artifact.name, depositList[i].name);
 
-                    /*foreach (var obj in depositUI)
-                    {
-                        obj.SetActive(true);
-                    }*/
-                    //forDeposit = false;
-                    //appManager.BackButtonArtifact();
-                    GameObject parent = this.gameObject.transform.parent.gameObject.transform.parent.gameObject;
-                    //this.gameObject.GetComponent<Renderer>().enabled = false;
-
-                    /*parent.AddComponent<CanvasGroup>();
-                    CanvasGroup canvasGroups = parent.GetComponent<CanvasGroup>();
-                    canvasGroups.alpha = 0f;
-                    canvasGroups.interactable = false;
-                    canvasGroups.ignoreParentGroups = true;*/
-                    appManager.DepositSucceded();
+                    appManager.DepositSucceded();*/
                 }
             }
             
         }
 
+        public void DepositInShelf()
+        {
+            GameObject artifact = appManager.GetArtifactSelected();
+            artifact.GetComponent<Artifact>().SetShelfID(shelfForDeposit.name);
+            PlayerPrefs.SetString(artifact.name, shelfForDeposit.name);
+            PlayerPrefs.SetString(artifact.name + "_Last", shelfForDeposit.name);
+            Debug.Log("Deposit in Shelf");
+            appManager.DepositSucceded();
+        }
+
         public void DepositFinished()
         {
-            //foreach (var obj in depositUI)
-            //{
-            //    obj.SetActive(false);
-            //}
             forDeposit = false;
             appManager.BackButtonArtifact();
         }
@@ -238,26 +245,31 @@ namespace MixedReality.Toolkit.Examples.Demos
             forDeposit = true;
             depositList.Clear();
 
+            Debug.Log("List for deposit");
+
             if (parent == warehouse)
                 appManager.A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = depositText;
 
             for (int i = 0; i < parent.transform.childCount; i++)
                 depositList.Add(parent.transform.GetChild(i).gameObject);
-
+            
             depositList.Sort((x,y) => x.name.CompareTo(y.name));
-
-            // se la lista è composta da scaffali depositabili si usa un prefab altrimenti se ne usa un altro (controllo fatto solo su primo elemento della lista, non funziona se mista)
-            list = GetComponent<VirtualizedScrollRectList>();
-            if (depositList[0].GetComponent<StorageContainer>().GetIsShelf())
-            {
-                list.Prefab = buttonPrefabs[1];
-            }
-            else
-            {
-                list.Prefab = buttonPrefabs[0];
-            }
-
             SetWords(depositList);
+        }
+
+        public void DepositInLastShelf()
+        {
+            forDeposit = true;
+            depositList.Clear();
+
+            Debug.Log("Deposit in last shelf");
+
+            GameObject artifact = appManager.GetArtifactSelected();
+            string lastShelfID = PlayerPrefs.GetString(artifact.name + "_Last");
+            GameObject shelf = appManager.FindChildRecursive(warehouse.transform, lastShelfID);
+
+            appManager.StartDepositNavigation(shelf);
+            shelfForDeposit = shelf;
         }
 
         public void Back()
@@ -276,6 +288,19 @@ namespace MixedReality.Toolkit.Examples.Demos
                     appManager.BackButtonArtifact();
                 }
             }
+        }
+
+        public void HandlePrefab(GameObject text, bool value)
+        {
+            Debug.Log("Handle prefab");
+ 
+            Transform icon = text.transform.parent.GetChild(1);
+            if (icon != null)
+            {
+                Debug.Log("Handle prefab 2");
+                icon.gameObject.SetActive(value);
+            }
+        
         }
 
         public bool GetForDeposit()

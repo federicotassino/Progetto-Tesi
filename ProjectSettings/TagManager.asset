@@ -9,6 +9,7 @@ TagManager:
   - MainText
   - PositionButton
   - Target
+  - Deposit list
   layers:
   - Default
   - TransparentFX

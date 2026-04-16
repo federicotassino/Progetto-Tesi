@@ -34,7 +34,9 @@ public struct ArtifactsStruct
     public GameObject solverIndicator;
     public GameObject navigationText;
     public GameObject depositButton;
+    public GameObject depositInLastShelfButton;
     public GameObject depositList;
+    public GameObject depositInShelfButton;
     public GameObject withdrawButton;
     public AudioSource triggerEntered;
     public GameObject[] artifactDepositedUI;
@@ -53,12 +55,16 @@ public class AppManager : MonoBehaviour
     private readonly string artifactTitle = "Reperto: ";
     private readonly string artifactShelfYes = "Il reperto si trova nello scaffale: ";
     private readonly string artifactShelfNo = "Il reperto non si trova in nessuno scaffale";
+    private readonly string artifactShelfLast = "Riposizionare il reperto nell'utlimo scaffale in cui si trovava";
     private readonly string artifactNavigation = "Dirigersi verso: ";
-    private readonly string artifactReached = "Reperto raggiunto!";
+    private readonly string[] targetReached = new string[2] {"Reperto raggiunto!", "Scaffale raggiunto. Procedere al deposito!"};
     private readonly List<Transform> currentPath = new();
     private List<Transform> recentPath = new();
     private int step = 0;
     private readonly string indicatorTag = "Target";
+    private readonly List<Transform> depositPath = new();
+    private VirtualizedScrollRectListTester vsrlt;
+    //private int depositStep = 0;
 
     [SerializeField] private GameObject homePanel;
     //Shelves panel
@@ -126,7 +132,9 @@ public class AppManager : MonoBehaviour
         A_Menu.solverIndicator.SetActive(false);
         A_Menu.navigationText.SetActive(false);
         A_Menu.depositButton.SetActive(false);
+        A_Menu.depositInShelfButton.SetActive(false);
         A_Menu.depositList.SetActive(false);
+        A_Menu.depositInLastShelfButton.SetActive(false);
         A_Menu.withdrawButton.SetActive(false);
         A_Menu.triggerEntered.Stop();
 
@@ -154,6 +162,8 @@ public class AppManager : MonoBehaviour
 
         //Artifacts setup
         GetAllArtifacts(A_Menu.artifacts);
+
+        vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
     }
 
     // Update is called once per frame
@@ -544,16 +554,9 @@ public class AppManager : MonoBehaviour
         list.SetWords(allArtifacts);
     }
 
-    //chiude la pagina dedicata ad un singolo reperto e torna alla ScrollView
+    //gestione del pulsante per tornare indietro nelle varie situazioni in cui può essere cliccato
     public void BackButtonArtifact()
     {
-        if (A_Menu.artifactDepositedUI[0].activeSelf)
-        {
-            DepositConfirmed();
-            return;
-        }
-
-        VirtualizedScrollRectListTester vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
         Debug.Log("Deposit List value: " +  vsrlt.GetForDeposit());
         if (!vsrlt.GetForDeposit())
         {
@@ -589,39 +592,16 @@ public class AppManager : MonoBehaviour
         }
         else
         {
-            Debug.Log(DateTime.Now.ToString("HH:mm:ss.fff") + ". Deposit list - else");
-            vsrlt.Back();
+            Debug.Log("Back");
+            if (!A_Menu.depositList.activeSelf)
+            {
+                DepositConfirmed();
+                StopNavigation();
+                return;
+            }
+            else
+                vsrlt.Back();
         }
-
-        //A_Menu.withdrawButton.SetActive(false);
-        //A_Menu.depositButton.SetActive(false);
-
-
-        /*A_Menu.artifactVirualizedList.gameObject.SetActive(true);
-        A_Menu.artifactText.SetActive(false);
-        A_Menu.startNavigationButton.SetActive(false);
-        A_Menu.artifactBackButton.SetActive(false);
-
-
-        //if(A_Menu.stopNavigationButton.activeSelf)
-        StopNavigation();
-
-        if (A_Menu.depositList.activeSelf)
-        {
-            int i = 0;
-            while (allArtifacts[i] != artifactSelected)
-            { i++; }
-
-            OnArtifactButtonClicked(i);
-            //vsrlt.Back();
-        }
-        else
-        { artifactSelected = null; }
-
-        if (!vsrlt.GetForDeposit())
-        {
-            vsrlt.Back();
-        }*/
     }
 
     //chiamata quando si clicca sul bottone di un reperto
@@ -652,6 +632,13 @@ public class AppManager : MonoBehaviour
         {
             A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = artifactShelfNo;
             A_Menu.depositButton.SetActive(true);
+
+            string lastShelfID = PlayerPrefs.GetString(allArtifacts[index].name + "_Last");
+            if (!string.IsNullOrEmpty(lastShelfID))
+            {
+                A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text += "\n" + artifactShelfLast + " (" + lastShelfID + ")?";
+                A_Menu.depositInLastShelfButton.SetActive(true);
+            }    
         }
     }
 
@@ -673,12 +660,25 @@ public class AppManager : MonoBehaviour
     //calcola il tutti gli step del percorso per raggiungere il reperto
     public void CalculatePath(Transform current)
     {
-        while (current.gameObject.name != warehouse.name)
+        if (!A_Menu.depositList.activeSelf)
         {
-            currentPath.Add(current);
-            current = current.parent;
+            while (current.gameObject.name != warehouse.name)
+            {
+                currentPath.Add(current);
+                current = current.parent;
+            }
+            currentPath.Reverse();
         }
-        currentPath.Reverse();
+        else
+        {
+            while (current.gameObject.name != warehouse.name)
+            {
+                currentPath.Add(current);
+                current = current.parent;
+            }
+            currentPath.Reverse();
+        }
+        
     }
 
     //inizia la navigazione per portare l'utente al reperto
@@ -773,18 +773,24 @@ public class AppManager : MonoBehaviour
             A_Menu.artifactTarget.GetComponent<ArtifactIndicator>().SetTargetPosition(currentPath[step-1]);
             A_Menu.artifactTarget.transform.position = currentPath[step-1].position;
             
-            //A_Menu.artifactTarget.transform.rotation = new Quaternion(90f, 0 , 0, A_Menu.artifactTarget.transform.rotation.w);
             A_Menu.stopNavigationButton.SetActive(false);
-            A_Menu.navigationText.GetComponent<TextMeshProUGUI>().text = artifactReached;
+            if (vsrlt.GetForDeposit())
+                A_Menu.navigationText.GetComponent<TextMeshProUGUI>().text = targetReached[1];
+            else
+                A_Menu.navigationText.GetComponent<TextMeshProUGUI>().text = targetReached[0];
 
             //salvataggio del percorso dell'ultimo reperto raggiunto per saltare eventuali step uguali per il prossimo reperto
-            if(recentPath.Count > 0)
+            if (recentPath.Count > 0)
                 recentPath.Clear();
 
             foreach (var item in currentPath)
                 recentPath.Add(item);
 
-            A_Menu.withdrawButton.SetActive(true);
+            //VirtualizedScrollRectListTester vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
+            if (!vsrlt.GetForDeposit())
+                A_Menu.withdrawButton.SetActive(true);
+            else
+                A_Menu.depositInShelfButton.SetActive(true);
         }
 
         if (step <= currentPath.Count)
@@ -807,7 +813,7 @@ public class AppManager : MonoBehaviour
         }
     }
 
-    //chiamata quando si interrompe la navigazione verso un reperto, ma anche dalla funzione del back button e dalla X del pannello reperti
+    //chiamata quando si interrompe la navigazione verso un reperto o uno scaffale, ma anche dalla funzione del back button e dalla X del pannello reperti
     public void StopNavigation()
     {
         A_Menu.artifactTarget.SetActive(false);
@@ -815,10 +821,19 @@ public class AppManager : MonoBehaviour
         A_Menu.stopNavigationButton.SetActive(false);
         A_Menu.navigationText.SetActive(false);
         A_Menu.depositButton.SetActive(false);
+        A_Menu.depositInLastShelfButton.SetActive(false);
+        A_Menu.depositInShelfButton.SetActive(false);
         foreach (var obj in A_Menu.artifactDepositedUI)
         {
             obj.SetActive(false);
         }
+
+        if (vsrlt.GetForDeposit())
+        {
+            A_Menu.artifactText.SetActive(true);
+            A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = artifactShelfNo;
+        }
+            
 
         if (A_Menu.artifactVirualizedList.gameObject.activeSelf)
         {
@@ -841,6 +856,13 @@ public class AppManager : MonoBehaviour
                 {
                     A_Menu.depositButton.SetActive(true);
                     Debug.Log("Deposit list - deposit button on");
+
+                    string lastShelfID = PlayerPrefs.GetString(artifactSelected.name + "_Last");
+                    if (!string.IsNullOrEmpty(lastShelfID))
+                    {
+                        A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text += "\n" + artifactShelfLast + " (" + lastShelfID + ")?";
+                        A_Menu.depositInLastShelfButton.SetActive(true);
+                    }
                 }
             }
         }
@@ -851,7 +873,7 @@ public class AppManager : MonoBehaviour
         A_Menu.withdrawButton.SetActive(false);
         //A_Menu.depositButton.SetActive(false);
         A_Menu.depositList.SetActive(false);
-        VirtualizedScrollRectListTester vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
+        //VirtualizedScrollRectListTester vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
         vsrlt.SetForDeposit(false);
 
         Debug.Log("Deposit list - Stop Navigation");
@@ -879,6 +901,18 @@ public class AppManager : MonoBehaviour
     public void ResetArtifactSelected()
         { artifactSelected = null; }
 
+    public void StartDepositNavigation(GameObject shelf)
+    {
+        //depositPath.Clear();
+        //depositStep = 0;
+        //VirtualizedScrollRectListTester vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
+        A_Menu.artifactText.SetActive(false);
+        A_Menu.depositList.SetActive(false);
+        currentPath.Clear();
+        CalculatePath(shelf.transform);
+        StartNavigation();
+    }
+
     public void DepositSucceded()
     {
         foreach (var obj in A_Menu.artifactDepositedUI)
@@ -888,11 +922,12 @@ public class AppManager : MonoBehaviour
 
         A_Menu.depositList.SetActive(false);
         A_Menu.artifactText.SetActive(false);
+        vsrlt.DepositFinished();
     }
 
     public void DepositConfirmed()
     {
-        A_Menu.depositList.SetActive(true);
+        //A_Menu.depositList.SetActive(true);
         A_Menu.artifactText.SetActive(true);
 
         foreach (var obj in A_Menu.artifactDepositedUI)
@@ -900,8 +935,23 @@ public class AppManager : MonoBehaviour
             obj.SetActive(false);
         }
 
-        VirtualizedScrollRectListTester vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
-        vsrlt.DepositFinished();
+        Debug.Log("Deposit confirmed");
+        A_Menu.artifactText.SetActive(true);
+        A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = artifactShelfNo;
+
+        //if (A_Menu.artifactVirualizedList.gameObject.activeSelf)
+        //{
+        //    A_Menu.artifactText.SetActive(true);
+        //    A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = artifactGeneralText;
+        //}
+
+        //VirtualizedScrollRectListTester vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
+        //vsrlt.DepositInShelf();
+    }
+
+    public List<GameObject> GetShelvesList()
+    {
+        return allShelves;
     }
 
     //funzione di debug chiamata da handmenu per visualizzare la posizione di tutti gli shelves
