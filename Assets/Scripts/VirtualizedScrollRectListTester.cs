@@ -8,10 +8,12 @@ using MixedReality.Toolkit.UX;
 using MixedReality.Toolkit.UX.Experimental;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace MixedReality.Toolkit.Examples.Demos
 {
@@ -34,7 +36,7 @@ namespace MixedReality.Toolkit.Examples.Demos
         private readonly string depositText = "Navigare la gerarchia fino allo scaffale desiderato";
         private List<GameObject> shelvesList = new();
         private GameObject shelfForDeposit;
-        //private GameObject[] depositUI;
+        private List<GameObject> artifactsList = new();
 
         private readonly string[] words = { "one", "two", "three", "zebra", "keyboard", "rabbit", "graphite", "ruby", };
         private List<string> buttonsNames = new();
@@ -45,6 +47,7 @@ namespace MixedReality.Toolkit.Examples.Demos
         private void Start()
         {
             shelvesList = appManager.GetShelvesList();
+            artifactsList = appManager.GetArtifactsList();
 
             if (buttonsNames.Count > 0)
             {
@@ -301,6 +304,26 @@ namespace MixedReality.Toolkit.Examples.Demos
                 icon.gameObject.SetActive(value);
             }
         
+        }
+
+        public void Searching(string txt)
+        {
+            List<GameObject> search = new();
+            int i = 0;
+            foreach (var item in artifactsList)
+            {
+                if (item.name.Contains(txt, StringComparison.OrdinalIgnoreCase))
+                {
+                    Debug.Log("Item \"" + item.name + "\" contains Txt \"" + txt + "\"");
+                    GameObject obj = new();
+                    obj.name = item.name;
+                    search.Add(obj);
+                    i++;
+                }
+            }
+            Debug.Log("Index = " + i + ". Search: " + string.Join(" - ", search.Select(go => go.name)));
+            SetWords(search);
+            appManager.UpdateArtifactList(search);
         }
 
         public bool GetForDeposit()

@@ -6,11 +6,13 @@ using MixedReality.Toolkit.UX.Experimental;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices.WindowsRuntime;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -28,6 +30,7 @@ public struct ArtifactsStruct
     public GameObject artifactBackButton;
     public GameObject artifactTitle;
     public GameObject artifactText;
+    public GameObject searchBar;
     public GameObject startNavigationButton;
     public GameObject stopNavigationButton;
     public GameObject artifactTarget;
@@ -49,13 +52,16 @@ public class AppManager : MonoBehaviour
     private List<GameObject> allShelves = new();
     private GameObject lastToggledPin;
     private List<GameObject> allArtifacts = new();
-    //private List<GameObject> artifactsButtonCreated = new();
+    private List<GameObject> artifactsOnList = new();
     private GameObject artifactSelected;
-    private readonly string artifactGeneralText = "Selezionare il reperto a cui si è interessati";
+    private readonly string artifactGeneralText = "Selezionare il reperto a cui si è interessati oppure effettuare una ricerca tramite la barra";
     private readonly string artifactTitle = "Reperto: ";
     private readonly string artifactShelfYes = "Il reperto si trova nello scaffale: ";
     private readonly string artifactShelfNo = "Il reperto non si trova in nessuno scaffale";
     private readonly string artifactShelfLast = "Riposizionare il reperto nell'utlimo scaffale in cui si trovava";
+    private readonly string initialDepositText = "Il reperto non è mai stato depositato nel magazzino. Procedere al primo deposito?";
+    private readonly string textDeposit = "Deposita reperto in un nuovo scaffale";
+    private readonly string initialDepositButtonText = "Deposita reperto in uno scaffale";
     private readonly string artifactNavigation = "Dirigersi verso: ";
     private readonly string[] targetReached = new string[2] {"Reperto raggiunto!", "Scaffale raggiunto. Procedere al deposito!"};
     private readonly List<Transform> currentPath = new();
@@ -147,15 +153,6 @@ public class AppManager : MonoBehaviour
 
         //per ogni scaffale presente nella lista chiamo la funzione per posizionarlo nell'ultima posizione salvata
         allShelves.ForEach((item) => SetInitialTransform(item));
-
-
-        /*firstText = shelvesListPanel.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "FirstText");
-        positionButton = shelvesListPanel.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "PositionButton");
-        secondText = shelvesListPanel.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "SecondText");
-        scrollView = shelvesListPanel.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "ScrollView");
-
-        positioningText = shelvesListPanel.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "PositioningText");
-        positioningButton = shelvesListPanel.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "StopPositioningButton");*/
         
         positioningText.gameObject.SetActive(false);
         positioningButton.transform.parent.gameObject.SetActive(false);
@@ -290,6 +287,7 @@ public class AppManager : MonoBehaviour
             if (t != wh.transform)
             {
                 //Debug.Log(t.name);
+                t.AddComponent<StorageContainer>();
                 allShelves.Add(t.gameObject);
                 
                 if (t.childCount == 0)
@@ -482,20 +480,9 @@ public class AppManager : MonoBehaviour
             lastToggledPin.SetActive(false);
     }
 
-    //aggiunge alla lista allArtifacts tutti gli elementi che compongono l'empty Artifacts
+    //aggiunge tutti gli elementi che compongono l'empty Artifacts alla lista allArtifacts e artifactsOnList (per la prima visualizzazione)
     public void GetAllArtifacts(GameObject ar)
     {
-        /*Transform[] allChildren = ar.GetComponentsInChildren<Transform>();
-
-        foreach (Transform t in allChildren)
-        {
-            if (t != ar.transform)
-            {
-                //Debug.Log(t.name);
-                allArtifacts.Add(t.gameObject);
-            }
-        }*/
-
         for (int i = 0; i < ar.transform.childCount; i++)
         {
             allArtifacts.Add(ar.transform.GetChild(i).gameObject);
@@ -504,7 +491,6 @@ public class AppManager : MonoBehaviour
         Debug.Log("Artifacts number: " + allArtifacts.Count);
 
         allArtifacts.Sort((x,y) => x.name.CompareTo(y.name));
-        
         allArtifacts.ForEach(x => SetArtifactsShelf(x));
     }
 
@@ -521,6 +507,7 @@ public class AppManager : MonoBehaviour
     {
         A_Menu.artifactTitle.GetComponent<TextMeshProUGUI>().text = artifactGeneralText;
         A_Menu.artifactVirualizedList.gameObject.SetActive(true);
+        A_Menu.searchBar.SetActive(true);
         A_Menu.artifactBackButton.SetActive(false);
         A_Menu.startNavigationButton.SetActive(false);
         A_Menu.stopNavigationButton.SetActive(false);
@@ -552,6 +539,7 @@ public class AppManager : MonoBehaviour
 
         VirtualizedScrollRectListTester list = A_Menu.artifactScrollView.GetComponent<VirtualizedScrollRectListTester>();
         list.SetWords(allArtifacts);
+        UpdateArtifactList(allArtifacts);
     }
 
     //gestione del pulsante per tornare indietro nelle varie situazioni in cui può essere cliccato
@@ -561,6 +549,7 @@ public class AppManager : MonoBehaviour
         if (!vsrlt.GetForDeposit())
         {
             A_Menu.artifactVirualizedList.gameObject.SetActive(true);
+            A_Menu.searchBar.SetActive(true);
             A_Menu.artifactText.SetActive(false);
             A_Menu.startNavigationButton.SetActive(false);
             A_Menu.artifactBackButton.SetActive(false);
@@ -607,14 +596,14 @@ public class AppManager : MonoBehaviour
     //chiamata quando si clicca sul bottone di un reperto
     public void OnArtifactButtonClicked(int index)
     {
-        Debug.Log("Button clicked: " + index + " - " + allArtifacts[index].name);
+        Debug.Log("Button clicked: " + index + " - " + artifactsOnList[index].name);
 
         currentPath.Clear();
-        //artifactSelected = allArtifacts[index];
-        string shelfID = allArtifacts[index].GetComponent<Artifact>().GetShelfID();
+        string shelfID = artifactsOnList[index].GetComponent<Artifact>().GetShelfID();
         A_Menu.artifactVirualizedList.gameObject.SetActive(false);
-        A_Menu.artifactTitle.GetComponent<TextMeshProUGUI>().text = artifactTitle + allArtifacts[index].name;
-        artifactSelected = allArtifacts[index];
+        A_Menu.searchBar.SetActive(false);
+        A_Menu.artifactTitle.GetComponent<TextMeshProUGUI>().text = artifactTitle + artifactsOnList[index].name;
+        artifactSelected = artifactsOnList[index];
         A_Menu.artifactText.SetActive(true);
         A_Menu.artifactBackButton.SetActive(true);
 
@@ -633,13 +622,32 @@ public class AppManager : MonoBehaviour
             A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = artifactShelfNo;
             A_Menu.depositButton.SetActive(true);
 
-            string lastShelfID = PlayerPrefs.GetString(allArtifacts[index].name + "_Last");
+            string lastShelfID = PlayerPrefs.GetString(artifactsOnList[index].name + "_Last");
             if (!string.IsNullOrEmpty(lastShelfID))
             {
-                A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text += "\n" + artifactShelfLast + " (" + lastShelfID + ")?";
+                A_Menu.depositButton.GetComponentInChildren<TextMeshProUGUI>().text = textDeposit;
+                A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text += ".\n" + artifactShelfLast + " (" + lastShelfID + ")?";
                 A_Menu.depositInLastShelfButton.SetActive(true);
-            }    
+            }
+            else
+            {
+                A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = initialDepositText;
+                A_Menu.depositButton.GetComponentInChildren<TextMeshProUGUI>().text = initialDepositButtonText;
+            }
         }
+    }
+
+    public void UpdateArtifactList(List<GameObject> list)
+    {
+        artifactsOnList.Clear();
+        foreach (GameObject go in list)
+        {
+            //allArtifacts.Find(x => x.name == go.name);
+            artifactsOnList.Add(allArtifacts.Find(x => x.name == go.name));
+        }
+            
+
+        Debug.Log(string.Join(" - ", artifactsOnList.Select(x => x.name)));
     }
 
     //trova il gameobject dello scaffale dall'ID salvato nel reperto
@@ -860,8 +868,14 @@ public class AppManager : MonoBehaviour
                     string lastShelfID = PlayerPrefs.GetString(artifactSelected.name + "_Last");
                     if (!string.IsNullOrEmpty(lastShelfID))
                     {
-                        A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text += "\n" + artifactShelfLast + " (" + lastShelfID + ")?";
+                        A_Menu.depositButton.GetComponentInChildren<TextMeshProUGUI>().text = textDeposit;
+                        A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text += ".\n" + artifactShelfLast + " (" + lastShelfID + ")?";
                         A_Menu.depositInLastShelfButton.SetActive(true);
+                    }
+                    else
+                    {
+                        A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = initialDepositText;
+                        A_Menu.depositButton.GetComponentInChildren<TextMeshProUGUI>().text = initialDepositButtonText;
                     }
                 }
             }
@@ -949,10 +963,20 @@ public class AppManager : MonoBehaviour
         //vsrlt.DepositInShelf();
     }
 
+    public void SearchArtifact(GameObject inputText)
+    {
+        string txt = inputText.GetComponent<MRTKTMPInputField>().text;
+        Debug.Log("Searching: \"" + txt + "\"");
+        A_Menu.artifactScrollView.GetComponent<VirtualizedScrollRectListTester>().Searching(txt);
+    }
+
     public List<GameObject> GetShelvesList()
     {
         return allShelves;
     }
+
+    public List<GameObject> GetArtifactsList()
+    { return allArtifacts; }
 
     //funzione di debug chiamata da handmenu per visualizzare la posizione di tutti gli shelves
     public void VisualizeAllShelves(bool visualize)
