@@ -19,6 +19,8 @@ public class DictationManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        micButtonOn.SetActive(false);
+
         dictationSubsystem = XRSubsystemHelpers.GetFirstRunningSubsystem<DictationSubsystem>();
         if (dictationSubsystem != null)
         {

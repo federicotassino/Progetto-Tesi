@@ -195,27 +195,10 @@ public class AppManager : MonoBehaviour
 
             shelf.transform.SetPositionAndRotation(new Vector3(float.Parse(position[0]), float.Parse(position[1]), float.Parse(position[2])), 
                 new Quaternion(float.Parse(rotation[0]), float.Parse(rotation[1]), float.Parse(rotation[2]), float.Parse(rotation[3])));
-
-            //reset scala
-            //scaffale.transform.localScale = new Vector3(1, 1, 1);
         }
     }
 
-    //chiamata alla Manipulation Ended di uno shelf (non c'è più)
-    /*public void ShelfPositioned()
-    {
-        if (!savePanel.activeSelf)
-        {
-            foreach (GameObject item in allShelves)
-            {
-                if (item.gameObject != lastShelfPositioned && item.GetComponent<ObjectManipulator>() != null)
-                    item.GetComponent<ObjectManipulator>().enabled = false;
-            }
-
-            savePanel.SetActive(true);
-        }
-    }*/
-
+    //chiamata da SavePositionButton per gestire il salvataggio della posizione dello scaffale ed eventuali scaffali sottostanti
     public void SaveNewPositions()
     {
         WorldLockingManager.GetInstance().Save();
@@ -233,12 +216,9 @@ public class AppManager : MonoBehaviour
         ResetPanelAfterPositioning();
     }
 
-    //salva la nuova posizione dell'ultimo scaffale con cui si è interagito
+    //salva la nuova posizione dello scaffale che gli viene passato
     public void SaveTransformObject(GameObject objectToSave)
     {
-        //WorldLockingManager.GetInstance().Save();
-        //Debug.Log("salvataggio mondo");
-
         objectToSave.transform.GetPositionAndRotation(out var positionTemp, out var rotationTemp);
 
         string objectPosition = positionTemp.x + "_" + positionTemp.y + "_" + positionTemp.z;
@@ -247,15 +227,8 @@ public class AppManager : MonoBehaviour
         PlayerPrefs.SetString(objectToSave.name, objectTransform);
         Debug.Log("Salvataggio " + objectToSave.name + ": " + objectTransform);
 
-        //lastShelfPositioned.GetComponent<BoundsControl>().HandlesActive = false;
-        //lastShelfPositioned.GetComponent<ObjectManipulator>().HostTransform = lastShelfPositioned.transform;
-
         if (objectToSave.TryGetComponent<ParentConstraint>(out var parentConstraint))
             Destroy(parentConstraint);
-
-        //curatorPanel.GetComponentInChildren<Follow>().IgnoreDistanceClamp = false;  DA RIMETTERE
-
-        //ResetPanelAfterPositioning();
     }
 
     //chiamata dai bottoni StopPositioningButton, BackButton e CloseButton del pannello per annullare il salvataggio della nuova posizione
@@ -398,13 +371,7 @@ public class AppManager : MonoBehaviour
         //Debug.Log("Button " + index + " clicked");
         
         lastShelfPositioned = shelvesButtonCreated[index];
-
-        //ClearScrollView();
-
-        //if (buttonList[index].transform.childCount > 0)
-        //{
         CreateShelvesScrollView(shelvesButtonCreated[index]);
-        //}
     }
 
     //svuota la scrollView prima di ripopolarla
@@ -461,7 +428,7 @@ public class AppManager : MonoBehaviour
         follow.IgnoreDistanceClamp = !follow.IgnoreDistanceClamp;
     }
 
-    //gestisce l'attivazione e disattivazione visiva del pin
+    //gestisce l'attivazione e disattivazione visiva del pin del pannello
     public void ChangeToggle(GameObject toggle)
     {
         if (lastToggledPin != null && lastToggledPin != toggle)
@@ -492,7 +459,7 @@ public class AppManager : MonoBehaviour
             lastToggledPin.SetActive(false);
     }
 
-    //aggiunge tutti gli elementi che compongono l'empty Artifacts alla lista allArtifacts e artifactsOnList (per la prima visualizzazione)
+    //aggiunge tutti gli elementi che compongono l'empty Artifacts alla lista allArtifacts
     public void GetAllArtifacts(GameObject ar)
     {
         for (int i = 0; i < ar.transform.childCount; i++)
@@ -821,12 +788,9 @@ public class AppManager : MonoBehaviour
     //quando la freccia target entra nel trigger si passa al punto successivo da raggiungere
     private void OnTriggerEnter(Collider other)
     {
-        //step-- serve per la gestione del 
         int tmp = step - 1;
         if (other.gameObject.CompareTag(indicatorTag) && tmp < currentPath.Count)
         {
-
-            //A_Menu.artifactIndicator.GetComponent<ArtifactIndicator>().SetMove(false);
             A_Menu.artifactTarget.SetActive(false);
             A_Menu.triggerEntered.Play();
             Debug.Log("Collider di " + other.gameObject.name + ". Step = " + step);
@@ -915,6 +879,7 @@ public class AppManager : MonoBehaviour
         NextStep();
     }
 
+    //chiamata quando si ritira un reperto dallo scaffale
     public void WithdrawArtifact()
     {
         PlayerPrefs.DeleteKey(artifactSelected.name);
@@ -954,7 +919,6 @@ public class AppManager : MonoBehaviour
 
     public void DepositConfirmed()
     {
-        //A_Menu.depositList.SetActive(true);
         A_Menu.artifactText.SetActive(true);
 
         foreach (var obj in A_Menu.artifactDepositedUI)
@@ -965,17 +929,9 @@ public class AppManager : MonoBehaviour
         Debug.Log("Deposit confirmed");
         A_Menu.artifactText.SetActive(true);
         A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = artifactShelfNo;
-
-        //if (A_Menu.artifactVirualizedList.gameObject.activeSelf)
-        //{
-        //    A_Menu.artifactText.SetActive(true);
-        //    A_Menu.artifactText.GetComponent<TextMeshProUGUI>().text = artifactGeneralText;
-        //}
-
-        //VirtualizedScrollRectListTester vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
-        //vsrlt.DepositInShelf();
     }
 
+    //chiamata quando si scrive sulla barra di ricerca dei reperti
     public void SearchArtifact(GameObject inputText)
     {
         string txt = inputText.GetComponent<MRTKTMPInputField>().text;
