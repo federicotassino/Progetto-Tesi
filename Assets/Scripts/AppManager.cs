@@ -30,7 +30,7 @@ public struct ArtifactsStruct
     public GameObject artifactBackButton;
     public GameObject artifactTitle;
     public GameObject artifactText;
-    public GameObject searchBar;
+    public GameObject searchGroup;
     public GameObject startNavigationButton;
     public GameObject stopNavigationButton;
     public GameObject artifactTarget;
@@ -111,26 +111,7 @@ public class AppManager : MonoBehaviour
         positioningSphere.SetActive(false);
         sphereIndicator.SetActive(false);
 
-        //settaggio velocità e distanze dei vari pannelli
-        float speed = 0.3f;
-        float minDistance = 0.6f;
-        float maxDistance = 1f;
-        float defaultDistance = 0.8f;
-        homePanel.GetComponentInChildren<Follow>().MoveLerpTime = speed;
-        homePanel.GetComponentInChildren<Follow>().RotateLerpTime = speed;
-        homePanel.GetComponentInChildren<Follow>().MinDistance = minDistance;
-        homePanel.GetComponentInChildren<Follow>().MaxDistance = maxDistance;
-        homePanel.GetComponentInChildren<Follow>().DefaultDistance = defaultDistance;
-        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().MoveLerpTime = speed;
-        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().RotateLerpTime = speed;
-        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().MinDistance = minDistance;
-        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().MaxDistance = maxDistance;
-        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().DefaultDistance = defaultDistance;
-        shelvesListPanel.GetComponentInChildren<Follow>().MoveLerpTime = speed;
-        shelvesListPanel.GetComponentInChildren<Follow>().RotateLerpTime = speed;
-        shelvesListPanel.GetComponentInChildren<Follow>().MinDistance = minDistance;
-        shelvesListPanel.GetComponentInChildren<Follow>().MaxDistance = maxDistance;
-        shelvesListPanel.GetComponentInChildren<Follow>().DefaultDistance = defaultDistance;
+        PanelsSetting();
 
         A_Menu.artifactsPanel.SetActive(false);
         A_Menu.artifactBackButton.SetActive(false);
@@ -167,6 +148,37 @@ public class AppManager : MonoBehaviour
     void Update()
     {
 
+    }
+
+    //settaggio velocità e distanze dei vari pannelli
+    public void PanelsSetting()
+    {
+        float speed = 0.3f;
+        float minDistance = 0.6f;
+        float maxDistance = 1f;
+        float defaultDistance = 0.8f;
+        float maxDegrees = 60f;
+        homePanel.GetComponentInChildren<Follow>().MoveLerpTime = speed;
+        homePanel.GetComponentInChildren<Follow>().RotateLerpTime = speed;
+        homePanel.GetComponentInChildren<Follow>().MinDistance = minDistance;
+        homePanel.GetComponentInChildren<Follow>().MaxDistance = maxDistance;
+        homePanel.GetComponentInChildren<Follow>().DefaultDistance = defaultDistance;
+        homePanel.GetComponentInChildren<Follow>().MaxViewHorizontalDegrees = maxDegrees;
+        homePanel.GetComponentInChildren<Follow>().MaxViewVerticalDegrees = maxDegrees;
+        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().MoveLerpTime = speed;
+        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().RotateLerpTime = speed;
+        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().MinDistance = minDistance;
+        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().MaxDistance = maxDistance;
+        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().DefaultDistance = defaultDistance;
+        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().MaxViewHorizontalDegrees = maxDegrees;
+        A_Menu.artifactsPanel.GetComponentInChildren<Follow>().MaxViewVerticalDegrees = maxDegrees;
+        shelvesListPanel.GetComponentInChildren<Follow>().MoveLerpTime = speed;
+        shelvesListPanel.GetComponentInChildren<Follow>().RotateLerpTime = speed;
+        shelvesListPanel.GetComponentInChildren<Follow>().MinDistance = minDistance;
+        shelvesListPanel.GetComponentInChildren<Follow>().MaxDistance = maxDistance;
+        shelvesListPanel.GetComponentInChildren<Follow>().DefaultDistance = defaultDistance;
+        shelvesListPanel.GetComponentInChildren<Follow>().MaxViewHorizontalDegrees = maxDegrees;
+        shelvesListPanel.GetComponentInChildren<Follow>().MaxViewVerticalDegrees = maxDegrees;
     }
 
     //posiziona gli scaffali - chiamata nello start e da ResetShelfPosition
@@ -507,7 +519,7 @@ public class AppManager : MonoBehaviour
     {
         A_Menu.artifactTitle.GetComponent<TextMeshProUGUI>().text = artifactGeneralText;
         A_Menu.artifactVirualizedList.gameObject.SetActive(true);
-        A_Menu.searchBar.SetActive(true);
+        A_Menu.searchGroup.SetActive(true);
         A_Menu.artifactBackButton.SetActive(false);
         A_Menu.startNavigationButton.SetActive(false);
         A_Menu.stopNavigationButton.SetActive(false);
@@ -549,7 +561,7 @@ public class AppManager : MonoBehaviour
         if (!vsrlt.GetForDeposit())
         {
             A_Menu.artifactVirualizedList.gameObject.SetActive(true);
-            A_Menu.searchBar.SetActive(true);
+            A_Menu.searchGroup.SetActive(true);
             A_Menu.artifactText.SetActive(false);
             A_Menu.startNavigationButton.SetActive(false);
             A_Menu.artifactBackButton.SetActive(false);
@@ -601,7 +613,8 @@ public class AppManager : MonoBehaviour
         currentPath.Clear();
         string shelfID = artifactsOnList[index].GetComponent<Artifact>().GetShelfID();
         A_Menu.artifactVirualizedList.gameObject.SetActive(false);
-        A_Menu.searchBar.SetActive(false);
+        this.gameObject.GetComponent<DictationManager>().StopDictation();
+        A_Menu.searchGroup.SetActive(false);
         A_Menu.artifactTitle.GetComponent<TextMeshProUGUI>().text = artifactTitle + artifactsOnList[index].name;
         artifactSelected = artifactsOnList[index];
         A_Menu.artifactText.SetActive(true);

@@ -17,6 +17,12 @@
       "source": "local-tarball",
       "dependencies": {}
     },
+    "com.microsoft.mrtk.tts.windows": {
+      "version": "file:MixedReality/com.microsoft.mrtk.tts.windows-1.0.4.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {}
+    },
     "com.microsoft.spatialaudio.spatializer.unity": {
       "version": "file:MixedReality/com.microsoft.spatialaudio.spatializer.unity-2.0.55.tgz",
       "depth": 0,
@@ -299,6 +305,16 @@
       },
       "url": "https://packages.unity.com"
     },
+    "org.mixedrealitytoolkit.accessibility": {
+      "version": "file:MixedReality/org.mixedrealitytoolkit.accessibility-1.0.3-pre.20.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.microsoft.mrtk.graphicstools.unity": "0.5.12",
+        "org.mixedrealitytoolkit.core": "3.0.0",
+        "com.unity.textmeshpro": "3.0.6"
+      }
+    },
     "org.mixedrealitytoolkit.core": {
       "version": "file:MixedReality/org.mixedrealitytoolkit.core-3.2.0.tgz",
       "depth": 0,
@@ -374,6 +390,15 @@
         "com.unity.inputsystem": "1.6.1",
         "com.unity.textmeshpro": "3.0.6",
         "com.unity.xr.interaction.toolkit": "2.3.0"
+      }
+    },
+    "org.mixedrealitytoolkit.windowsspeech": {
+      "version": "file:MixedReality/org.mixedrealitytoolkit.windowsspeech-3.0.3.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.microsoft.mrtk.tts.windows": "1.0.1",
+        "org.mixedrealitytoolkit.core": "3.0.0"
       }
     },
     "com.unity.modules.ai": {

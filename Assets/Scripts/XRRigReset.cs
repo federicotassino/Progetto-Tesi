@@ -1,3 +1,6 @@
+using MixedReality.Toolkit;
+using MixedReality.Toolkit.Subsystems;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
