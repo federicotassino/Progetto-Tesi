@@ -215,7 +215,7 @@ namespace MixedReality.Toolkit.Examples.Demos
         public void DepositInShelf()
         {
             GameObject artifact = appManager.GetArtifactSelected();
-            artifact.GetComponent<Artifact>().SetShelfID(shelfForDeposit.name);
+            artifact.GetComponent<ArtifactView>().data.SetShelfID(shelfForDeposit.name);
             PlayerPrefs.SetString(artifact.name, shelfForDeposit.name);
             PlayerPrefs.SetString(artifact.name + "_Last", shelfForDeposit.name);
             Debug.Log("Deposit in Shelf");
@@ -314,14 +314,14 @@ namespace MixedReality.Toolkit.Examples.Demos
             {
                 if (item.name.Contains(txt, StringComparison.OrdinalIgnoreCase))
                 {
-                    Debug.Log("Item \"" + item.name + "\" contains Txt \"" + txt + "\"");
+                    //Debug.Log("Item \"" + item.name + "\" contains Txt \"" + txt + "\"");
                     GameObject obj = new();
                     obj.name = item.name;
                     search.Add(obj);
                     i++;
                 }
             }
-            Debug.Log("Index = " + i + ". Search: " + string.Join(" - ", search.Select(go => go.name)));
+            //Debug.Log("Index = " + i + ". Search: " + string.Join(" - ", search.Select(go => go.name)));
             SetWords(search);
             appManager.UpdateArtifactList(search);
         }

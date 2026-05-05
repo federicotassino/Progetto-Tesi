@@ -3,23 +3,27 @@ using System.Collections.Generic;
 //using Unity.VisualScripting.Dependencies.Sqlite; //poi con SQLite4Unity3d ???
 using UnityEngine;
 
-public class Artifact : MonoBehaviour
+[System.Serializable]
+public class Artifact
 {
     //[PrimaryKey, AutoIncrement]
-    private int Id { get; set; }
-    private string Name { get; set; }
-    private string TextDescription { get; set; }
-    public string ShelfID; //poi deve essere un int con ID dello shelf
+    public int id;
+    public string name;
+    public string textDescription;
+    public string shelfID; //poi deve essere un int con ID dello shelf
 
 
     public override string ToString()
     {
-        return string.Format("[Artifact: Id={0}, Name={1},  TextDescription={2},  ShelvingID={3}]", Id, Name, TextDescription, ShelfID);
+        return string.Format("[Artifact: Id={0}, Name={1},  TextDescription={2},  ShelvingID={3}]", id, name, textDescription, shelfID);
     }
 
     public string GetShelfID()
-        { return ShelfID; }
+        { return shelfID; }
 
     public void SetShelfID(string id)
-        { ShelfID = id; }
+        { shelfID = id; }
+
+    public void SetName(string nome)
+    { this.name = nome; }
 }

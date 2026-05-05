@@ -14,6 +14,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityEditor.Experimental;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.UI;
@@ -22,6 +23,7 @@ using UnityEngine.UI;
 public struct ArtifactsStruct
 {
     public GameObject artifacts;
+    public GameObject artifactsPrefab;
     public GameObject artifactsPanel;
     public Transform artifactVirualizedList;
     //public Transform artifactContentTransform;
@@ -72,6 +74,7 @@ public class AppManager : MonoBehaviour
     private VirtualizedScrollRectListTester vsrlt;
     //private int depositStep = 0;
 
+    [SerializeField] private APIService apiService;
     [SerializeField] private GameObject homePanel;
     //Shelves panel
     [SerializeField] private GameObject firstText;
@@ -99,13 +102,11 @@ public class AppManager : MonoBehaviour
     
 
     // Start is called before the first frame update
-    void Start()
+    async void Start()
     {
         WorldLockingManager.GetInstance().Load();
 
-        //PlayerPrefs.DeleteKey("Franco (1)");
-        //PlayerPrefs.DeleteKey("Franco (2)");
-
+        apiService = new APIService();
 
         shelvesListPanel.SetActive(false);
         positioningSphere.SetActive(false);
@@ -139,6 +140,15 @@ public class AppManager : MonoBehaviour
         positioningButton.transform.parent.gameObject.SetActive(false);
 
         //Artifacts setup
+        //GetAllArtifacts(A_Menu.artifacts);  per artifacts hardcodati
+        List<Artifact> artifactsServer = await apiService.GetAllArtifactsAsync();
+        if (artifactsServer == null)
+        {
+            Debug.LogError("Nessun artifact ricevuto");
+            return;
+        }
+
+        SpawnArtifacts(artifactsServer);
         GetAllArtifacts(A_Menu.artifacts);
 
         vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
@@ -280,7 +290,7 @@ public class AppManager : MonoBehaviour
                     if (t.gameObject.TryGetComponent<StorageContainer>(out var st))
                     {
                         st.SetIsShelf(true);
-                        Debug.Log(t.gameObject.name + " isShelf value: " + st.GetIsShelf());
+                        //Debug.Log(t.gameObject.name + " isShelf value: " + st.GetIsShelf());
                     }
                 }
             }   
@@ -459,6 +469,30 @@ public class AppManager : MonoBehaviour
             lastToggledPin.SetActive(false);
     }
 
+    void SpawnArtifacts(List<Artifact> artifactsServer)
+    {
+        Debug.Log("artifactsServer.Count: " + artifactsServer.Count);
+        for (int i = 0; i < artifactsServer.Count; i++)
+        {
+            if (artifactsServer[i] == null)
+            {
+                Debug.LogError("Elemento NULL a index " + i);
+                continue;
+            }
+            Vector3 position = new Vector3(0, 0, 0);
+
+            GameObject obj = Instantiate(A_Menu.artifactsPrefab, position, Quaternion.identity, A_Menu.artifacts.transform);
+            Debug.Log(obj == null ? "obj NULL" : "obj OK");
+            Debug.Log(artifactsServer == null ? "lista NULL" : "lista OK");
+            Debug.Log(artifactsServer[i] == null ? "elemento NULL" : "elemento OK");
+            Debug.Log(artifactsServer[i].name == null ? "name NULL" : "name OK");
+            obj.name = artifactsServer[i].name;
+
+            ArtifactView view = obj.GetComponent<ArtifactView>();
+            view.SetData(artifactsServer[i]);
+        }
+    }
+
     //aggiunge tutti gli elementi che compongono l'empty Artifacts alla lista allArtifacts
     public void GetAllArtifacts(GameObject ar)
     {
@@ -478,7 +512,7 @@ public class AppManager : MonoBehaviour
         string shelfID = PlayerPrefs.GetString(artifact.name);
         Debug.Log("ShelfID: " +  shelfID);
         if(shelfID != "")
-            artifact.GetComponent<Artifact>().SetShelfID(shelfID);
+            artifact.GetComponent<ArtifactView>().data.SetShelfID(shelfID);
     }
 
     //crea la scrollView con i reperti
@@ -578,7 +612,7 @@ public class AppManager : MonoBehaviour
         Debug.Log("Button clicked: " + index + " - " + artifactsOnList[index].name);
 
         currentPath.Clear();
-        string shelfID = artifactsOnList[index].GetComponent<Artifact>().GetShelfID();
+        string shelfID = artifactsOnList[index].GetComponent<ArtifactView>().data.GetShelfID();
         A_Menu.artifactVirualizedList.gameObject.SetActive(false);
         this.gameObject.GetComponent<DictationManager>().StopDictation();
         A_Menu.searchGroup.SetActive(false);
@@ -625,9 +659,8 @@ public class AppManager : MonoBehaviour
             //allArtifacts.Find(x => x.name == go.name);
             artifactsOnList.Add(allArtifacts.Find(x => x.name == go.name));
         }
-            
-
-        Debug.Log(string.Join(" - ", artifactsOnList.Select(x => x.name)));
+        
+        //Debug.Log(string.Join(" - ", artifactsOnList.Select(x => x.name)));
     }
 
     //trova il gameobject dello scaffale dall'ID salvato nel reperto
@@ -830,7 +863,7 @@ public class AppManager : MonoBehaviour
             if (artifactSelected != null)
             {
                 Debug.Log("Deposit list - navigation else");
-                string shelfID = artifactSelected.GetComponent<Artifact>().GetShelfID();
+                string shelfID = artifactSelected.GetComponent<ArtifactView>().data.GetShelfID();
 
                 if (!string.IsNullOrEmpty(shelfID))
                 {
@@ -883,7 +916,7 @@ public class AppManager : MonoBehaviour
     public void WithdrawArtifact()
     {
         PlayerPrefs.DeleteKey(artifactSelected.name);
-        artifactSelected.GetComponent<Artifact>().SetShelfID("");
+        artifactSelected.GetComponent<ArtifactView>().data.SetShelfID("");
         BackButtonArtifact();
     }
 
@@ -935,7 +968,7 @@ public class AppManager : MonoBehaviour
     public void SearchArtifact(GameObject inputText)
     {
         string txt = inputText.GetComponent<MRTKTMPInputField>().text;
-        Debug.Log("Searching: \"" + txt + "\"");
+        //Debug.Log("Searching: \"" + txt + "\"");
         A_Menu.artifactScrollView.GetComponent<VirtualizedScrollRectListTester>().Searching(txt);
     }
 

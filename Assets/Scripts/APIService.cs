@@ -1,0 +1,177 @@
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.Networking;
+
+public class APIService
+{
+    static private string ipV4 = "10.153.54.75";
+    private string baseUrl = $"http://{ipV4}:5000/dati";
+
+    // =========================
+    // GET ALL
+    // =========================
+    public async Task<List<Artifact>> GetAllArtifactsAsync()
+    {
+        using (UnityWebRequest request = UnityWebRequest.Get(baseUrl))
+        {
+            var operation = request.SendWebRequest();
+
+            while (!operation.isDone)
+                await Task.Yield();
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"Errore: {request.error}");
+                Debug.LogError($"Response Code: {request.responseCode}");
+                Debug.LogError($"URL: {request.url}");
+                return null;
+            }
+
+            string json = request.downloadHandler.text;
+
+            string wrappedJson = "{ \"items\": " + json + " }";
+
+            ArtifactListWrapper result =
+                JsonUtility.FromJson<ArtifactListWrapper>(wrappedJson);
+
+            return result.items;
+        }
+    }
+
+    /*
+    // =========================
+    // GET BY ID
+    // =========================
+    public async Task<Artifact> GetArtifactByIdAsync(int id)
+    {
+        string url = baseUrl + "/" + id;
+
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
+        {
+            var operation = request.SendWebRequest();
+
+            while (!operation.isDone)
+                await Task.Yield();
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"Errore: {request.error}");
+                Debug.LogError($"Response Code: {request.responseCode}");
+                Debug.LogError($"URL: {request.url}");
+                return null;
+            }
+
+            string json = request.downloadHandler.text;
+
+            Artifact artifact = JsonUtility.FromJson<Artifact>(json);
+
+            return artifact;
+        }
+    }
+
+    // =========================
+    // CREATE NEW ARTIFACT
+    // =========================
+    public async Task<Artifact> CreateArtifactAsync(Artifact artifact)
+    {
+        string url = baseUrl;
+
+        string json = JsonUtility.ToJson(artifact);
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+
+        using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
+        {
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            var operation = request.SendWebRequest();
+            while (!operation.isDone)
+                await Task.Yield();
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError(request.error);
+                Debug.LogError(request.downloadHandler.text);
+                return null;
+            }
+
+            string responseJson = request.downloadHandler.text;
+
+            Debug.Log("POST OK: " + responseJson);
+
+            //Parse della risposta del server
+            Artifact created =
+                JsonUtility.FromJson<Artifact>(responseJson);
+
+            return created;
+        }
+    }
+
+    // =========================
+    // DELETE ARTIFACT BY ID
+    // =========================
+    public async Task<bool> DeleteArtifactAsync(int id)
+    {
+        string url = baseUrl + "/" + id;
+
+        using (UnityWebRequest request = UnityWebRequest.Delete(url))
+        {
+            request.downloadHandler = new DownloadHandlerBuffer();
+
+            var operation = request.SendWebRequest();
+            while (!operation.isDone)
+                await Task.Yield();
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError(request.error);
+                Debug.LogError(request.downloadHandler.text);
+                return false;
+            }
+
+            Debug.Log("DELETE OK: " + request.downloadHandler.text);
+            return true;
+        }
+    }
+
+    // =========================
+    // UPDATE ARTIFACT BY ID
+    // =========================
+    public async Task<Artifact> UpdateArtifactAsync(Artifact artifact)
+    {
+        string url = baseUrl + "/" + artifact.id;
+
+        string json = JsonUtility.ToJson(artifact);
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+
+        using (UnityWebRequest request = UnityWebRequest.Put(url, bodyRaw))
+        {
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.downloadHandler = new DownloadHandlerBuffer();
+
+            var operation = request.SendWebRequest();
+            while (!operation.isDone)
+                await Task.Yield();
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError(request.error);
+                return null;
+            }
+
+            string responseJson = request.downloadHandler.text;
+
+            return JsonUtility.FromJson<Artifact>(responseJson);
+        }
+    }
+    */
+
+    [System.Serializable]
+    private class ArtifactListWrapper
+    {
+        public List<Artifact> items;
+    }
+}
