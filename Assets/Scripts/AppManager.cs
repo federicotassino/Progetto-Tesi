@@ -482,15 +482,53 @@ public class AppManager : MonoBehaviour
             Vector3 position = new Vector3(0, 0, 0);
 
             GameObject obj = Instantiate(A_Menu.artifactsPrefab, position, Quaternion.identity, A_Menu.artifacts.transform);
-            Debug.Log(obj == null ? "obj NULL" : "obj OK");
-            Debug.Log(artifactsServer == null ? "lista NULL" : "lista OK");
-            Debug.Log(artifactsServer[i] == null ? "elemento NULL" : "elemento OK");
-            Debug.Log(artifactsServer[i].name == null ? "name NULL" : "name OK");
+            //Debug.Log(obj == null ? "obj NULL" : "obj OK");
+            //Debug.Log(artifactsServer == null ? "lista NULL" : "lista OK");
+            //Debug.Log(artifactsServer[i] == null ? "elemento NULL" : "elemento OK");
+            //Debug.Log(artifactsServer[i].name == null ? "name NULL" : "name OK");
             obj.name = artifactsServer[i].name;
 
             ArtifactView view = obj.GetComponent<ArtifactView>();
             view.SetData(artifactsServer[i]);
         }
+    }
+
+    public void SpawnSingleArtifact(Artifact artifact)
+    {
+        Debug.Log("SpawnSingleArtifact chiamato");
+
+        if (artifact == null)
+        {
+            Debug.LogError("artifact NULL");
+            return;
+        }
+
+        if (A_Menu.artifactsPrefab == null)
+        {
+            Debug.LogError("prefab NULL");
+            return;
+        }
+
+        Vector3 position = new Vector3(0, 0, 0);
+
+        GameObject obj = Instantiate(A_Menu.artifactsPrefab, position, Quaternion.identity, A_Menu.artifacts.transform);
+        Debug.Log("Instanziato oggetto");
+        
+
+        ArtifactView view = obj.GetComponent<ArtifactView>();
+        if (view == null)
+        {
+            Debug.LogError("ArtifactView mancante!");
+            return;
+        }
+        view.SetData(artifact);
+        Debug.Log(artifact.name == null ? "name NULL" : "name OK");
+        obj.name = artifact.name;
+
+        //aggiunta a lista locale
+        allArtifacts.Add(obj);
+        allArtifacts.Sort((x, y) => x.name.CompareTo(y.name));
+        SetArtifactsShelf(obj);
     }
 
     //aggiunge tutti gli elementi che compongono l'empty Artifacts alla lista allArtifacts
@@ -510,7 +548,7 @@ public class AppManager : MonoBehaviour
     public void SetArtifactsShelf(GameObject artifact)
     {
         string shelfID = PlayerPrefs.GetString(artifact.name);
-        Debug.Log("ShelfID: " +  shelfID);
+        //Debug.Log("ShelfID: " +  shelfID);
         if(shelfID != "")
             artifact.GetComponent<ArtifactView>().data.SetShelfID(shelfID);
     }
