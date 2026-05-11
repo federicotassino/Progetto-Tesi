@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -18,6 +19,7 @@ using UnityEditor.Experimental;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 [System.Serializable]
 public struct ArtifactsStruct
@@ -56,6 +58,7 @@ public class AppManager : MonoBehaviour
     private List<GameObject> allArtifacts = new();
     private List<GameObject> artifactsOnList = new();
     private GameObject artifactSelected;
+    private Dictionary<int, GameObject> spawnedArtifacts = new Dictionary<int, GameObject>();
     private readonly string artifactGeneralText = "Selezionare il reperto a cui si è interessati oppure effettuare una ricerca tramite la barra";
     private readonly string artifactTitle = "Reperto: ";
     private readonly string artifactShelfYes = "Il reperto si trova nello scaffale: ";
@@ -70,7 +73,7 @@ public class AppManager : MonoBehaviour
     private List<Transform> recentPath = new();
     private int step = 0;
     private readonly string indicatorTag = "Target";
-    private readonly List<Transform> depositPath = new();
+    //private readonly List<Transform> depositPath = new();
     private VirtualizedScrollRectListTester vsrlt;
     //private int depositStep = 0;
 
@@ -141,15 +144,19 @@ public class AppManager : MonoBehaviour
 
         //Artifacts setup
         //GetAllArtifacts(A_Menu.artifacts);  per artifacts hardcodati
-        List<Artifact> artifactsServer = await apiService.GetAllArtifactsAsync();
+
+        // ================================
+        // ORA SCARICA TUTTO WEB SOCKET!!!
+        // ================================ 
+        /*List<Artifact> artifactsServer = await apiService.GetAllArtifactsAsync();
         if (artifactsServer == null)
         {
-            Debug.LogError("Nessun artifact ricevuto");
+            Debug.Log("Nessun artifact ricevuto");
             return;
         }
 
         SpawnArtifacts(artifactsServer);
-        GetAllArtifacts(A_Menu.artifacts);
+        GetAllArtifacts(A_Menu.artifacts);*/
 
         vsrlt = A_Menu.depositList.GetComponentInChildren<VirtualizedScrollRectListTester>();
     }
@@ -476,7 +483,7 @@ public class AppManager : MonoBehaviour
         {
             if (artifactsServer[i] == null)
             {
-                Debug.LogError("Elemento NULL a index " + i);
+                Debug.Log("Elemento NULL a index " + i);
                 continue;
             }
             Vector3 position = new Vector3(0, 0, 0);
@@ -490,6 +497,8 @@ public class AppManager : MonoBehaviour
 
             ArtifactView view = obj.GetComponent<ArtifactView>();
             view.SetData(artifactsServer[i]);
+
+            spawnedArtifacts.Add(artifactsServer[i].id, obj);
         }
     }
 
@@ -499,13 +508,13 @@ public class AppManager : MonoBehaviour
 
         if (artifact == null)
         {
-            Debug.LogError("artifact NULL");
+            Debug.Log("artifact NULL");
             return;
         }
 
         if (A_Menu.artifactsPrefab == null)
         {
-            Debug.LogError("prefab NULL");
+            Debug.Log("prefab NULL");
             return;
         }
 
@@ -518,7 +527,7 @@ public class AppManager : MonoBehaviour
         ArtifactView view = obj.GetComponent<ArtifactView>();
         if (view == null)
         {
-            Debug.LogError("ArtifactView mancante!");
+            Debug.Log("ArtifactView mancante!");
             return;
         }
         view.SetData(artifact);
@@ -529,6 +538,94 @@ public class AppManager : MonoBehaviour
         allArtifacts.Add(obj);
         allArtifacts.Sort((x, y) => x.name.CompareTo(y.name));
         SetArtifactsShelf(obj);
+
+        //aggiornamento scrollView
+        VirtualizedScrollRectListTester list = A_Menu.artifactScrollView.GetComponent<VirtualizedScrollRectListTester>();
+        list.SetWords(allArtifacts);
+        UpdateArtifactList(allArtifacts);
+        MRTKTMPInputField text = A_Menu.searchGroup.GetComponentInChildren<MRTKTMPInputField>();
+        SearchArtifact(text.gameObject);
+
+        //aggiunta al dizionario
+        spawnedArtifacts.Add(artifact.id, obj);
+    }
+
+    //Distrugge il gameobject del reperto che è stato eliminato
+    public void DeleteArtifact(int id)
+    {
+        Debug.Log("DELETE artifact: " + id);
+
+        //eliminazione dalla lista
+        if (allArtifacts.Contains(spawnedArtifacts[id]))
+        {
+            foreach (var artifact in allArtifacts)
+            {
+                if (artifact.name == spawnedArtifacts[id].name)
+                {
+                    Debug.Log("DELETE from list");
+                    allArtifacts.Remove(artifact);
+
+                    //aggiornamento ScrollView
+                    VirtualizedScrollRectListTester list = A_Menu.artifactScrollView.GetComponent<VirtualizedScrollRectListTester>();
+                    list.SetWords(allArtifacts);
+                    UpdateArtifactList(allArtifacts);
+
+                    break;
+                }
+            }
+        }
+
+        //eliminazione dal daizionario
+        if (spawnedArtifacts.ContainsKey(id))
+        {
+            Destroy(spawnedArtifacts[id]);
+
+            spawnedArtifacts.Remove(id);
+        }
+
+        MRTKTMPInputField text = A_Menu.searchGroup.GetComponentInChildren<MRTKTMPInputField>();
+        SearchArtifact(text.gameObject);
+    }
+
+    //Update di un artifact
+    public void UpdateArtifact(Artifact artifact)
+    {
+        Debug.Log("UPDATE artifact: " + artifact.id);
+
+        if (!spawnedArtifacts.ContainsKey(artifact.id))
+        {
+            Debug.Log("Artifact non trovato per update");
+
+            return;
+        }
+
+        GameObject obj = spawnedArtifacts[artifact.id];
+        GameObject objList = new();
+        foreach (var item in allArtifacts)
+        {
+            if (item.name == artifact.name)
+            {
+                objList = item;
+                break;
+            }
+        }
+
+        // aggiorna nome GameObject
+        obj.name = artifact.name;
+        objList.name = artifact.name;
+
+        // aggiorna ArtifactView
+        ArtifactView view = obj.GetComponent<ArtifactView>();
+
+        if (view != null)
+        {
+            view.SetData(artifact);
+        }
+
+        // aggiornamento ScrollView
+        VirtualizedScrollRectListTester list = A_Menu.artifactScrollView.GetComponent<VirtualizedScrollRectListTester>();
+        list.SetWords(allArtifacts);
+        UpdateArtifactList(allArtifacts);
     }
 
     //aggiunge tutti gli elementi che compongono l'empty Artifacts alla lista allArtifacts
@@ -543,6 +640,33 @@ public class AppManager : MonoBehaviour
 
         allArtifacts.Sort((x,y) => x.name.CompareTo(y.name));
         allArtifacts.ForEach(x => SetArtifactsShelf(x));
+    }
+
+    public async Task RefreshArtifacts()
+    {
+        Debug.Log("FULL REFRESH");
+
+        // distruggi vecchi oggetti
+        foreach (var obj in spawnedArtifacts.Values)
+        {
+            Destroy(obj);
+        }
+
+        spawnedArtifacts.Clear();
+        allArtifacts.Clear();
+
+        // riscarica dal server
+        List<Artifact> artifacts = await apiService.GetAllArtifactsAsync();
+
+        // respawn
+        SpawnArtifacts(artifacts);
+        GetAllArtifacts(A_Menu.artifacts);
+
+        // reset ScrollView
+        VirtualizedScrollRectListTester list = A_Menu.artifactScrollView.GetComponent<VirtualizedScrollRectListTester>();
+        list.SetScrollView();
+        list.SetWords(allArtifacts);
+        UpdateArtifactList(allArtifacts);
     }
 
     public void SetArtifactsShelf(GameObject artifact)

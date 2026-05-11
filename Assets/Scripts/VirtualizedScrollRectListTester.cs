@@ -51,44 +51,9 @@ namespace MixedReality.Toolkit.Examples.Demos
 
             if (buttonsNames.Count > 0)
             {
-                list = GetComponent<VirtualizedScrollRectList>();
-                list.OnVisible = (go, i) =>
-                {
-                    foreach (var text in go.GetComponentsInChildren<TextMeshProUGUI>())
-                    {
-                        if (text.gameObject.name == "Text")
-                        {
-                            text.text = $"{buttonsNames[i % buttonsNames.Count]}";
-
-                            if (this.gameObject.tag == "Deposit list")
-                            {
-                                GameObject item = shelvesList.Find(x => x.name == text.text);
-                                if (item != null)
-                                {
-                                    if (item.GetComponent<StorageContainer>().GetIsShelf())
-                                        HandlePrefab(text.gameObject, false);
-                                    else
-                                        HandlePrefab(text.gameObject, true);
-                                }
-                            }
-                        }
-                    }
-
-                    foreach (var item in go.GetComponentsInChildren<PressableButton>())
-                    {
-                        item.OnClicked.AddListener(() => ButtonListener(i));
-                    }
-                };
-
-                list.OnInvisible = (go, i) =>
-                {
-                    foreach (var item in go.GetComponentsInChildren<PressableButton>())
-                    {
-                        item.OnClicked.RemoveAllListeners();
-                    }
-                };
+                SetScrollView();
             }
-            else
+            /*else
             {
                 list = GetComponent<VirtualizedScrollRectList>();
                 list.OnVisible = (go, i) =>
@@ -114,7 +79,7 @@ namespace MixedReality.Toolkit.Examples.Demos
                         item.OnClicked.RemoveAllListeners();
                     }
                 };
-            }
+            }*/
             
         }
 
@@ -175,6 +140,46 @@ namespace MixedReality.Toolkit.Examples.Demos
         /// </summary>
         [ContextMenu("Set Item Count 200")]
         public void TestItemCount2() => list.SetItemCount(200);
+
+        public void SetScrollView()
+        {
+            list = GetComponent<VirtualizedScrollRectList>();
+            list.OnVisible = (go, i) =>
+            {
+                foreach (var text in go.GetComponentsInChildren<TextMeshProUGUI>())
+                {
+                    if (text.gameObject.name == "Text")
+                    {
+                        text.text = $"{buttonsNames[i % buttonsNames.Count]}";
+
+                        if (this.gameObject.tag == "Deposit list")
+                        {
+                            GameObject item = shelvesList.Find(x => x.name == text.text);
+                            if (item != null)
+                            {
+                                if (item.GetComponent<StorageContainer>().GetIsShelf())
+                                    HandlePrefab(text.gameObject, false);
+                                else
+                                    HandlePrefab(text.gameObject, true);
+                            }
+                        }
+                    }
+                }
+
+                foreach (var item in go.GetComponentsInChildren<PressableButton>())
+                {
+                    item.OnClicked.AddListener(() => ButtonListener(i));
+                }
+            };
+
+            list.OnInvisible = (go, i) =>
+            {
+                foreach (var item in go.GetComponentsInChildren<PressableButton>())
+                {
+                    item.OnClicked.RemoveAllListeners();
+                }
+            };
+        }
 
         void ButtonListener(int i)
         {

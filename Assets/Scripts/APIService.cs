@@ -6,8 +6,10 @@ using UnityEngine.Networking;
 
 public class APIService
 {
-    static private string ipV4 = "10.153.54.75";
-    private string baseUrl = $"http://{ipV4}:5000/dati";
+    //static private string ipV4 = "10.153.54.75";
+    static private string IP_Casa = "192.168.178.23";
+    static private string IP_HotSpot = "10.153.54.75";
+    private string baseUrl = $"http://{IP_HotSpot}:5000/dati";
 
     // =========================
     // GET ALL
@@ -23,9 +25,9 @@ public class APIService
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError($"Errore: {request.error}");
-                Debug.LogError($"Response Code: {request.responseCode}");
-                Debug.LogError($"URL: {request.url}");
+                Debug.Log($"Errore: {request.error}");
+                Debug.Log($"Response Code: {request.responseCode}");
+                Debug.Log($"URL: {request.url}");
                 return null;
             }
 
@@ -57,9 +59,9 @@ public class APIService
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError($"Errore: {request.error}");
-                Debug.LogError($"Response Code: {request.responseCode}");
-                Debug.LogError($"URL: {request.url}");
+                Debug.Log($"Errore: {request.error}");
+                Debug.Log($"Response Code: {request.responseCode}");
+                Debug.Log($"URL: {request.url}");
                 return null;
             }
 
@@ -93,8 +95,8 @@ public class APIService
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError(request.error);
-                Debug.LogError(request.downloadHandler.text);
+                Debug.Log(request.error);
+                Debug.Log(request.downloadHandler.text);
                 return null;
             }
 
@@ -127,8 +129,8 @@ public class APIService
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError(request.error);
-                Debug.LogError(request.downloadHandler.text);
+                Debug.Log(request.error);
+                Debug.Log(request.downloadHandler.text);
                 return false;
             }
 
@@ -158,7 +160,7 @@ public class APIService
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError(request.error);
+                Debug.Log(request.error);
                 return null;
             }
 
