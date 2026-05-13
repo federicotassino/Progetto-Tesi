@@ -42,6 +42,7 @@ public class WebSocketClient : MonoBehaviour
 
             UnityMainThreadDispatcher.Instance().Enqueue(async () =>
             {
+                await manager.RefreshShelves();
                 await manager.RefreshArtifacts();
             });
         };
@@ -98,14 +99,39 @@ public class WebSocketClient : MonoBehaviour
                 //CREATE
                 case "create":
                     
-                    Debug.Log("WebSocket create");
-                    
-                    Artifact artifact = JsonUtility.FromJson<Artifact>(json);
-
-                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                    switch (baseMsg.entityType)
                     {
-                        manager.SpawnSingleArtifact(artifact);
-                    });
+                        // ARTIFACT CREATE
+                        case "artifact":
+
+                            Debug.Log("WebSocket artifact create");
+
+                            Artifact artifact = JsonUtility.FromJson<Artifact>(json);
+
+                            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                            {
+                                manager.SpawnSingleArtifact(artifact);
+                            });
+
+                            break;
+
+                        // SHELF CREATE
+                        case "shelf":
+
+                            Debug.Log("Shelf CREATE");
+
+                            StorageContainer shelf =
+                                JsonUtility.FromJson<StorageContainer>(json);
+
+                            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                            {
+                                manager.SpawnSingleShelf(shelf);
+                            });
+
+                            break;
+
+                    }
+                    
 
                     break;
 

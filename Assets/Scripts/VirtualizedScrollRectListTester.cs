@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -143,6 +144,7 @@ namespace MixedReality.Toolkit.Examples.Demos
 
         public void SetScrollView()
         {
+            Debug.Log("SetScrollView");
             list = GetComponent<VirtualizedScrollRectList>();
             list.OnVisible = (go, i) =>
             {
@@ -157,7 +159,7 @@ namespace MixedReality.Toolkit.Examples.Demos
                             GameObject item = shelvesList.Find(x => x.name == text.text);
                             if (item != null)
                             {
-                                if (item.GetComponent<StorageContainer>().GetIsShelf())
+                                if (item.GetComponent<StorageContainerView>().data.GetIsShelf())
                                     HandlePrefab(text.gameObject, false);
                                 else
                                     HandlePrefab(text.gameObject, true);
@@ -220,9 +222,9 @@ namespace MixedReality.Toolkit.Examples.Demos
         public void DepositInShelf()
         {
             GameObject artifact = appManager.GetArtifactSelected();
-            artifact.GetComponent<ArtifactView>().data.SetShelfID(shelfForDeposit.name);
-            PlayerPrefs.SetString(artifact.name, shelfForDeposit.name);
-            PlayerPrefs.SetString(artifact.name + "_Last", shelfForDeposit.name);
+            artifact.GetComponent<ArtifactView>().data.SetShelfID(shelfForDeposit.GetComponent<StorageContainerView>().data.id);
+            PlayerPrefs.SetInt(appManager.artifactPP + artifact.GetComponent<ArtifactView>().data.id.ToString(), shelfForDeposit.GetComponent<StorageContainerView>().data.id);
+            PlayerPrefs.SetInt(appManager.artifactPP + artifact.GetComponent<ArtifactView>().data.id.ToString() + "_Last", shelfForDeposit.GetComponent<StorageContainerView>().data.id);
             Debug.Log("Deposit in Shelf");
             appManager.DepositSucceded();
         }
@@ -235,6 +237,7 @@ namespace MixedReality.Toolkit.Examples.Demos
 
         public void SetWords(List<GameObject> items)
         {
+            Debug.Log("SetWords");
             list = GetComponent<VirtualizedScrollRectList>();
             list.SetItemCount(0);
             buttonsNames.Clear();
@@ -273,8 +276,8 @@ namespace MixedReality.Toolkit.Examples.Demos
             Debug.Log("Deposit in last shelf");
 
             GameObject artifact = appManager.GetArtifactSelected();
-            string lastShelfID = PlayerPrefs.GetString(artifact.name + "_Last");
-            GameObject shelf = appManager.FindChildRecursive(warehouse.transform, lastShelfID);
+            int lastShelvingUnit = PlayerPrefs.GetInt(appManager.artifactPP + artifact.GetComponent<ArtifactView>().data.id + "_Last");
+            GameObject shelf = appManager.FindChildRecursive(warehouse.transform, lastShelvingUnit);
 
             appManager.StartDepositNavigation(shelf);
             shelfForDeposit = shelf;

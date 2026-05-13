@@ -38,8 +38,8 @@ public class ArtifactIndicator : MonoBehaviour
 
     public void SetTargetPosition(Transform shelfTransform)
     {
-        if (shelfTransform.gameObject.TryGetComponent<StorageContainer>(out var st))
-            lookingForShelf = st.GetIsShelf();
+        if (shelfTransform.gameObject.TryGetComponent<StorageContainerView>(out var st))
+            lookingForShelf = st.data.GetIsShelf();
 
         Vector3 value = shelfTransform.position;
         if (!lookingForShelf)

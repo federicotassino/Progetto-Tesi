@@ -6,4 +6,5 @@ using UnityEngine;
 public class WSMessage
 {
     public string eventType;
+    public string entityType;
 }

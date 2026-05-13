@@ -2,12 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class StorageContainer : MonoBehaviour
+[System.Serializable]
+public class StorageContainer
 {
     //[PrimaryKey, AutoIncrement]
-    private int Id { get; set; }
-    private string Name { get; set; }
-    private bool isShelf = false;
+    public int id;
+    public string name;
+    public string worldTransform;
+    public int parentShelfId;
+    public bool isShelf = false;
 
 
     // Start is called before the first frame update

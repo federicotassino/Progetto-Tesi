@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental;
 using UnityEngine;
 
 public class ArtifactView : MonoBehaviour
@@ -22,7 +23,9 @@ public class ArtifactView : MonoBehaviour
     {
         data = artifact;
 
-        // 🔥 qui puoi anche rinominare il GameObject
         gameObject.name = artifact.name;
+
+        PlayerPrefs.SetInt("ArtifactID_" + artifact.id, artifact.shelvingUnit);
+        PlayerPrefs.SetInt("ArtifactID_" + artifact.id + "_Last", artifact.shelvingUnit);
     }
 }

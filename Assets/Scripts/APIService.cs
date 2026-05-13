@@ -10,6 +10,7 @@ public class APIService
     static private string IP_Casa = "192.168.178.23";
     static private string IP_HotSpot = "10.153.54.75";
     private string baseUrl = $"http://{IP_HotSpot}:5000/dati";
+    private string shelfUrl = $"http://{IP_HotSpot}:5000/shelf";
 
     // =========================
     // GET ALL
@@ -171,9 +172,41 @@ public class APIService
     }
     */
 
+    public async Task<List<StorageContainer>> GetShelves()
+    {
+        using var client =
+            UnityWebRequest.Get(shelfUrl);
+
+        var operation = client.SendWebRequest();
+
+        while (!operation.isDone)
+            await Task.Yield();
+
+        if (client.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError(client.error);
+            return null;
+        }
+
+        string json = client.downloadHandler.text;
+
+        ShelfWrapper wrapper =
+            JsonUtility.FromJson<ShelfWrapper>(
+                "{\"items\":" + json + "}"
+            );
+
+        return wrapper.items;
+    }
+
     [System.Serializable]
     private class ArtifactListWrapper
     {
         public List<Artifact> items;
+    }
+
+    [System.Serializable]
+    public class ShelfWrapper
+    {
+        public List<StorageContainer> items;
     }
 }

@@ -10,19 +10,19 @@ public class Artifact
     public int id;
     public string name;
     public string textDescription;
-    public string shelfID; //poi deve essere un int con ID dello shelf
+    public int shelvingUnit = -1; //poi deve essere un int con ID dello shelf
 
 
     public override string ToString()
     {
-        return string.Format("[Artifact: Id={0}, Name={1},  TextDescription={2},  ShelvingID={3}]", id, name, textDescription, shelfID);
+        return string.Format("[Artifact: Id={0}, Name={1},  TextDescription={2},  ShelvingUnit={3}]", id, name, textDescription, shelvingUnit.ToString());
     }
 
-    public string GetShelfID()
-        { return shelfID; }
+    public int GetShelfID()
+        { return shelvingUnit; }
 
-    public void SetShelfID(string id)
-        { shelfID = id; }
+    public void SetShelfID(int id)
+        { shelvingUnit = id; }
 
     public void SetName(string nome)
     { this.name = nome; }
