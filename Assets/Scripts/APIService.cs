@@ -9,7 +9,7 @@ public class APIService
     //static private string ipV4 = "10.153.54.75";
     static private string IP_Casa = "192.168.178.23";
     static private string IP_HotSpot = "10.153.54.75";
-    private string baseUrl = $"http://{IP_HotSpot}:5000/dati";
+    private string datiUrl = $"http://{IP_HotSpot}:5000/dati";
     private string shelfUrl = $"http://{IP_HotSpot}:5000/shelf";
 
     // =========================
@@ -17,7 +17,7 @@ public class APIService
     // =========================
     public async Task<List<Artifact>> GetAllArtifactsAsync()
     {
-        using (UnityWebRequest request = UnityWebRequest.Get(baseUrl))
+        using (UnityWebRequest request = UnityWebRequest.Get(datiUrl))
         {
             var operation = request.SendWebRequest();
 
@@ -138,39 +138,36 @@ public class APIService
             Debug.Log("DELETE OK: " + request.downloadHandler.text);
             return true;
         }
-    }
+    }*/
 
     // =========================
     // UPDATE ARTIFACT BY ID
     // =========================
-    public async Task<Artifact> UpdateArtifactAsync(Artifact artifact)
+    public async Task UpdateArtifact(Artifact artifact)
     {
-        string url = baseUrl + "/" + artifact.id;
-
         string json = JsonUtility.ToJson(artifact);
+
+        using var client = new UnityWebRequest(datiUrl + "/" + artifact.id, "PUT");
+
         byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
 
-        using (UnityWebRequest request = UnityWebRequest.Put(url, bodyRaw))
+        client.uploadHandler = new UploadHandlerRaw(bodyRaw);
+
+        client.downloadHandler = new DownloadHandlerBuffer();
+
+        client.SetRequestHeader("Content-Type", "application/json");
+
+        var operation = client.SendWebRequest();
+
+        while (!operation.isDone)
+            await Task.Yield();
+
+        if (client.result != UnityWebRequest.Result.Success)
         {
-            request.SetRequestHeader("Content-Type", "application/json");
-            request.downloadHandler = new DownloadHandlerBuffer();
-
-            var operation = request.SendWebRequest();
-            while (!operation.isDone)
-                await Task.Yield();
-
-            if (request.result != UnityWebRequest.Result.Success)
-            {
-                Debug.Log(request.error);
-                return null;
-            }
-
-            string responseJson = request.downloadHandler.text;
-
-            return JsonUtility.FromJson<Artifact>(responseJson);
+            Debug.LogError(client.error);
         }
     }
-    */
+
 
     public async Task<List<StorageContainer>> GetShelves()
     {
@@ -196,6 +193,31 @@ public class APIService
             );
 
         return wrapper.items;
+    }
+
+    public async Task UpdateShelf(StorageContainer shelf)
+    {
+        string json = JsonUtility.ToJson(shelf);
+
+        using var client = new UnityWebRequest(shelfUrl + "/" + shelf.id, "PUT");
+
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+
+        client.uploadHandler = new UploadHandlerRaw(bodyRaw);
+
+        client.downloadHandler = new DownloadHandlerBuffer();
+
+        client.SetRequestHeader("Content-Type", "application/json");
+
+        var operation = client.SendWebRequest();
+
+        while (!operation.isDone)
+            await Task.Yield();
+
+        if (client.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError(client.error);
+        }
     }
 
     [System.Serializable]

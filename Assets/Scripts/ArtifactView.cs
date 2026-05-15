@@ -25,7 +25,7 @@ public class ArtifactView : MonoBehaviour
 
         gameObject.name = artifact.name;
 
-        PlayerPrefs.SetInt("ArtifactID_" + artifact.id, artifact.shelvingUnit);
-        PlayerPrefs.SetInt("ArtifactID_" + artifact.id + "_Last", artifact.shelvingUnit);
+        //PlayerPrefs.SetInt("ArtifactID_" + artifact.id, artifact.shelvingUnit);
+        //PlayerPrefs.SetInt("ArtifactID_" + artifact.id + "_Last", artifact.shelvingUnit);
     }
 }

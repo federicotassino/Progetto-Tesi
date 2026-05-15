@@ -139,18 +139,40 @@ public class WebSocketClient : MonoBehaviour
                 //UPDATE
                 case "update":
 
-                    Debug.Log("WebSocket UPDATE");
-
-                    Artifact updatedArtifact =
-                        JsonUtility.FromJson<Artifact>(json);
-
-                    UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                    switch (baseMsg.entityType)
                     {
-                        manager.UpdateArtifact(updatedArtifact);
-                    });
+                        // ARTIFACT UPDATE
+                        case "artifact":
+
+                            Debug.Log("WebSocket artifact update");
+
+                            Artifact updatedArtifact =
+                                JsonUtility.FromJson<Artifact>(json);
+
+                            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                            {
+                                manager.UpdateArtifact(updatedArtifact);
+                            });
+
+                            break;
+
+                        // SHELF UPDATE (TODO per posizione)
+                        case "shelf":
+
+                            Debug.Log("WebSocket shelf update");
+
+                            StorageContainer updatedShelf =
+                                JsonUtility.FromJson<StorageContainer>(json);
+
+                            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                            {
+                                manager.UpdateShelf(updatedShelf);
+                            });
+
+                            break;
+                    }
 
                     break;
-
 
                 default:
 

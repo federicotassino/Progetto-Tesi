@@ -219,12 +219,18 @@ namespace MixedReality.Toolkit.Examples.Demos
             
         }
 
-        public void DepositInShelf()
+        public async void DepositInShelf()
         {
             GameObject artifact = appManager.GetArtifactSelected();
-            artifact.GetComponent<ArtifactView>().data.SetShelfID(shelfForDeposit.GetComponent<StorageContainerView>().data.id);
-            PlayerPrefs.SetInt(appManager.artifactPP + artifact.GetComponent<ArtifactView>().data.id.ToString(), shelfForDeposit.GetComponent<StorageContainerView>().data.id);
-            PlayerPrefs.SetInt(appManager.artifactPP + artifact.GetComponent<ArtifactView>().data.id.ToString() + "_Last", shelfForDeposit.GetComponent<StorageContainerView>().data.id);
+            Artifact data = artifact.GetComponent<ArtifactView>().data;
+            data.SetShelfID(shelfForDeposit.GetComponent<StorageContainerView>().data.id);
+            
+            // salvataggio
+            //PlayerPrefs.SetInt(appManager.artifactPP + artifact.GetComponent<ArtifactView>().data.id.ToString(), shelfForDeposit.GetComponent<StorageContainerView>().data.id);
+            //PlayerPrefs.SetInt(appManager.artifactPP + artifact.GetComponent<ArtifactView>().data.id.ToString() + "_Last", shelfForDeposit.GetComponent<StorageContainerView>().data.id);
+
+            await appManager.apiService.UpdateArtifact(data);
+
             Debug.Log("Deposit in Shelf");
             appManager.DepositSucceded();
         }
@@ -276,7 +282,8 @@ namespace MixedReality.Toolkit.Examples.Demos
             Debug.Log("Deposit in last shelf");
 
             GameObject artifact = appManager.GetArtifactSelected();
-            int lastShelvingUnit = PlayerPrefs.GetInt(appManager.artifactPP + artifact.GetComponent<ArtifactView>().data.id + "_Last");
+            //int lastShelvingUnit = PlayerPrefs.GetInt(appManager.artifactPP + artifact.GetComponent<ArtifactView>().data.id + "_Last");
+            int lastShelvingUnit = artifact.GetComponent<ArtifactView>().data.lastShelvingUnit;
             GameObject shelf = appManager.FindChildRecursive(warehouse.transform, lastShelvingUnit);
 
             appManager.StartDepositNavigation(shelf);
